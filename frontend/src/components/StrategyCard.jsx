@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react'
-import { ArrowRight, ChevronDown, Sprout, Trophy, UserCheck, Wheat } from 'lucide-react'
+import { ArrowRight, ChevronDown, Trophy, UserCheck } from 'lucide-react'
+import CropGlyph from './CropGlyph'
 import RadarScore from './RadarScore'
 
 const FIT_LABEL = {
@@ -69,6 +70,10 @@ export default function StrategyCard({ rotation, cropMap, isTop, delta }) {
         </div>
       </div>
 
+      <div className="score-track" aria-hidden="true">
+        <i data-tone={fit_category} style={{ width: `${Math.max(0, Math.min(100, score))}%` }} />
+      </div>
+
       {typeof delta === 'number' && delta !== 0 ? (
         <span className={`delta ${delta > 0 ? 'delta--up' : 'delta--down'}`}>
           {delta > 0 ? '+' : ''}
@@ -80,12 +85,11 @@ export default function StrategyCard({ rotation, cropMap, isTop, delta }) {
         {sequence.map((cropId, index) => {
           const crop = cropMap[cropId]
           const legume = crop?.family === 'legume'
-          const Icon = legume ? Sprout : Wheat
           return (
             <Fragment key={`${cropId}-${index}`}>
               {index > 0 ? <ArrowRight className="seq__arrow" aria-hidden="true" /> : null}
               <span className={`crop-tile ${legume ? 'crop-tile--legume' : 'crop-tile--cereal'}`}>
-                <Icon className="icon" aria-hidden="true" />
+                <CropGlyph id={cropId} />
                 <small>{crop?.name || cropId}</small>
               </span>
             </Fragment>

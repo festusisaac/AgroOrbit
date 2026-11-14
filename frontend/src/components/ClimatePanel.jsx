@@ -1,5 +1,5 @@
-import { CloudRain, Droplets, ThermometerSun } from 'lucide-react'
-import { RainfallChart, TemperatureChart } from './Charts'
+import { CloudRain, CloudSun, Droplets, ThermometerSun, Wind } from 'lucide-react'
+import { MONTHS, RainfallChart, TemperatureChart } from './Charts'
 
 export default function ClimatePanel({ climate, status, location: field }) {
   if (status === 'loading' || !climate) {
@@ -68,6 +68,7 @@ export default function ClimatePanel({ climate, status, location: field }) {
       <div className="climate__body">
         <div className="climate__stats">
           <div className="climate-stat">
+            <span className="climate-stat__icon"><CloudSun className="icon" aria-hidden="true" /></span>
             <div className="l">Season</div>
             <div className="v">
               {season.length_days_median ?? '—'}
@@ -76,6 +77,7 @@ export default function ClimatePanel({ climate, status, location: field }) {
             <div className="f">P20 {season.length_days_p20 ?? '—'} d</div>
           </div>
           <div className="climate-stat">
+            <span className="climate-stat__icon"><CloudRain className="icon" aria-hidden="true" /></span>
             <div className="l">Season rain</div>
             <div className="v">
               {season_rain_total.median_mm ?? '—'}
@@ -84,6 +86,7 @@ export default function ClimatePanel({ climate, status, location: field }) {
             <div className="f">P20 {season_rain_total.p20_mm ?? '—'} mm</div>
           </div>
           <div className="climate-stat">
+            <span className="climate-stat__icon"><Wind className="icon" aria-hidden="true" /></span>
             <div className="l">Dry spells</div>
             <div className="v">
               {dry_spells.avg_per_season ?? '—'}
@@ -92,6 +95,7 @@ export default function ClimatePanel({ climate, status, location: field }) {
             <div className="f">Longest {dry_spells.longest_median_days ?? '—'} d</div>
           </div>
           <div className="climate-stat">
+            <span className="climate-stat__icon"><ThermometerSun className="icon" aria-hidden="true" /></span>
             <div className="l">Heat days</div>
             <div className="v">
               {heat_stress_days.median ?? '—'}
@@ -99,6 +103,33 @@ export default function ClimatePanel({ climate, status, location: field }) {
             </div>
             <div className="f">Above {threshold}°C</div>
           </div>
+        </div>
+
+        <div className="monthstrip" aria-label="Monthly rainfall">
+          {monthly.map((m) => {
+            const max = Math.max(1, ...monthly.map((item) => Number(item.rain_p50) || 0))
+            const pct = Math.max(5, Math.round(((Number(m.rain_p50) || 0) / max) * 100))
+            const wet = (Number(m.rain_p50) || 0) >= 60
+            return (
+              <div
+                className="monthstrip__col"
+                key={m.month}
+                title={`${MONTHS[m.month - 1]} · ${m.rain_p50} mm`}
+              >
+                <span className="monthstrip__bar" style={{ height: `${pct}%` }} data-wet={wet} />
+                <span className="monthstrip__m">{MONTHS[m.month - 1]}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="monthstrip-legend">
+          <span>
+            <i data-wet="true" /> Rainy
+          </span>
+          <span>
+            <i /> Dry
+          </span>
         </div>
 
         <div className="climate__charts">

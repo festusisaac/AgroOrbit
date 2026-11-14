@@ -90,6 +90,7 @@ export default function ResultsView({
   const alternatives = rotations.filter((r) => !r.is_existing)
   const options = alternatives.length ? alternatives : rotations
   const baselineScore = existing?.score
+  const topScore = options[0]?.score
   const period = rotations[0]?.trace?.climate_period || '1991–2023'
   const outcome = OUTCOME[data.overall_outcome] || OUTCOME.similar_options
 
@@ -143,6 +144,22 @@ export default function ResultsView({
                 {cropMap[id]?.name || id}
               </span>
             ))}
+          </div>
+          <div className="baseline__compare">
+            <div>
+              <span>Current</span>
+              <div className="mini-track" aria-hidden="true">
+                <i data-tone={existing.fit_category} style={{ width: `${Math.max(0, Math.min(100, existing.score))}%` }} />
+              </div>
+              <b>{Math.round(existing.score)}</b>
+            </div>
+            <div>
+              <span>Recommended</span>
+              <div className="mini-track" aria-hidden="true">
+                <i data-tone="strong" style={{ width: `${Math.max(0, Math.min(100, topScore || 0))}%` }} />
+              </div>
+              <b>{Math.round(topScore || 0)}</b>
+            </div>
           </div>
           <div className="baseline__score">
             {Math.round(existing.score)}
