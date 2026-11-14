@@ -1,0 +1,30 @@
+[
+  {
+    "id": "kano",
+    "name": "Kano",
+    "lat": 12.0022,
+    "lon": 8.5920,
+    "zone": "Sudan Savanna"
+  },
+  {
+    "id": "kaduna",
+    "name": "Kaduna",
+    "lat": 10.5105,
+    "lon": 7.4165,
+    "zone": "Northern Guinea Savanna"
+  },
+  {
+    "id": "jos",
+    "name": "Jos",
+    "lat": 9.8965,
+    "lon": 8.8583,
+    "zone": "Jos Plateau"
+  },
+  {
+    "id": "makurdi",
+    "name": "Makurdi",
+    "lat": 7.7322,
+    "lon": 8.5391,
+    "zone": "Southern Guinea Savanna"
+  }
+]

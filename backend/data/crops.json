@@ -1,0 +1,344 @@
+[
+  {
+    "id": "maize",
+    "name": "Maize",
+    "family": "cereal",
+    "traits": {
+      "season_days": {
+        "value": {"min": 90, "max": 120},
+        "verified": false,
+        "source": null
+      },
+      "water_need_mm": {
+        "value": {"min": 500, "max": 800},
+        "verified": false,
+        "source": null
+      },
+      "drought_tolerance": {
+        "value": 2,
+        "verified": false,
+        "source": null
+      },
+      "heat_tolerance": {
+        "value": 2,
+        "verified": false,
+        "source": null
+      },
+      "nitrogen_fixing": {
+        "value": false,
+        "verified": false,
+        "source": null
+      },
+      "residue_organic_matter": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "ground_cover_erosion": {
+        "value": 2,
+        "verified": false,
+        "source": null
+      },
+      "forage_value": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "root_depth": {
+        "value": "medium",
+        "verified": false,
+        "source": null
+      }
+    },
+    "pest_disease_notes": {
+      "value": "Susceptible to fall armyworm, stem borers, and Striga hermonthica; monoculture drastically increases soil-borne pathogen load.",
+      "verified": false,
+      "source": null
+    }
+  },
+  {
+    "id": "sorghum",
+    "name": "Sorghum",
+    "family": "cereal",
+    "traits": {
+      "season_days": {
+        "value": {"min": 100, "max": 140},
+        "verified": false,
+        "source": null
+      },
+      "water_need_mm": {
+        "value": {"min": 400, "max": 650},
+        "verified": false,
+        "source": null
+      },
+      "drought_tolerance": {
+        "value": 4,
+        "verified": false,
+        "source": null
+      },
+      "heat_tolerance": {
+        "value": 4,
+        "verified": false,
+        "source": null
+      },
+      "nitrogen_fixing": {
+        "value": false,
+        "verified": false,
+        "source": null
+      },
+      "residue_organic_matter": {
+        "value": 4,
+        "verified": false,
+        "source": null
+      },
+      "ground_cover_erosion": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "forage_value": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "root_depth": {
+        "value": "deep",
+        "verified": false,
+        "source": null
+      }
+    },
+    "pest_disease_notes": {
+      "value": "Vulnerable to Striga and shoot fly; breaks maize pest and disease cycle effectively.",
+      "verified": false,
+      "source": null
+    }
+  },
+  {
+    "id": "pearl_millet",
+    "name": "Pearl Millet",
+    "family": "cereal",
+    "traits": {
+      "season_days": {
+        "value": {"min": 75, "max": 100},
+        "verified": false,
+        "source": null
+      },
+      "water_need_mm": {
+        "value": {"min": 300, "max": 500},
+        "verified": false,
+        "source": null
+      },
+      "drought_tolerance": {
+        "value": 5,
+        "verified": false,
+        "source": null
+      },
+      "heat_tolerance": {
+        "value": 5,
+        "verified": false,
+        "source": null
+      },
+      "nitrogen_fixing": {
+        "value": false,
+        "verified": false,
+        "source": null
+      },
+      "residue_organic_matter": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "ground_cover_erosion": {
+        "value": 2,
+        "verified": false,
+        "source": null
+      },
+      "forage_value": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "root_depth": {
+        "value": "deep",
+        "verified": false,
+        "source": null
+      }
+    },
+    "pest_disease_notes": {
+      "value": "Highest drought resilience among Sahelian cereals; susceptible to downy mildew, smut, and head miner.",
+      "verified": false,
+      "source": null
+    }
+  },
+  {
+    "id": "cowpea",
+    "name": "Cowpea",
+    "family": "legume",
+    "traits": {
+      "season_days": {
+        "value": {"min": 60, "max": 90},
+        "verified": false,
+        "source": null
+      },
+      "water_need_mm": {
+        "value": {"min": 300, "max": 500},
+        "verified": false,
+        "source": null
+      },
+      "drought_tolerance": {
+        "value": 4,
+        "verified": false,
+        "source": null
+      },
+      "heat_tolerance": {
+        "value": 4,
+        "verified": false,
+        "source": null
+      },
+      "nitrogen_fixing": {
+        "value": true,
+        "verified": false,
+        "source": null
+      },
+      "residue_organic_matter": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "ground_cover_erosion": {
+        "value": 4,
+        "verified": false,
+        "source": null
+      },
+      "forage_value": {
+        "value": 4,
+        "verified": false,
+        "source": null
+      },
+      "root_depth": {
+        "value": "shallow",
+        "verified": false,
+        "source": null
+      }
+    },
+    "pest_disease_notes": {
+      "value": "Attacked by Maruca pod borer, thrips, and storage weevils (bruchids); premier break crop that starves cereal pests and fixes nitrogen.",
+      "verified": false,
+      "source": null
+    }
+  },
+  {
+    "id": "groundnut",
+    "name": "Groundnut",
+    "family": "legume",
+    "traits": {
+      "season_days": {
+        "value": {"min": 90, "max": 120},
+        "verified": false,
+        "source": null
+      },
+      "water_need_mm": {
+        "value": {"min": 450, "max": 650},
+        "verified": false,
+        "source": null
+      },
+      "drought_tolerance": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "heat_tolerance": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "nitrogen_fixing": {
+        "value": true,
+        "verified": false,
+        "source": null
+      },
+      "residue_organic_matter": {
+        "value": 2,
+        "verified": false,
+        "source": null
+      },
+      "ground_cover_erosion": {
+        "value": 4,
+        "verified": false,
+        "source": null
+      },
+      "forage_value": {
+        "value": 4,
+        "verified": false,
+        "source": null
+      },
+      "root_depth": {
+        "value": "medium",
+        "verified": false,
+        "source": null
+      }
+    },
+    "pest_disease_notes": {
+      "value": "Vulnerable to groundnut rosette virus, early/late leaf spot, and aflatoxin contamination under terminal drought; provides valuable haulm fodder.",
+      "verified": false,
+      "source": null
+    }
+  },
+  {
+    "id": "soybean",
+    "name": "Soybean",
+    "family": "legume",
+    "traits": {
+      "season_days": {
+        "value": {"min": 95, "max": 125},
+        "verified": false,
+        "source": null
+      },
+      "water_need_mm": {
+        "value": {"min": 450, "max": 700},
+        "verified": false,
+        "source": null
+      },
+      "drought_tolerance": {
+        "value": 2,
+        "verified": false,
+        "source": null
+      },
+      "heat_tolerance": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "nitrogen_fixing": {
+        "value": true,
+        "verified": false,
+        "source": null
+      },
+      "residue_organic_matter": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "ground_cover_erosion": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "forage_value": {
+        "value": 3,
+        "verified": false,
+        "source": null
+      },
+      "root_depth": {
+        "value": "medium",
+        "verified": false,
+        "source": null
+      }
+    },
+    "pest_disease_notes": {
+      "value": "Excellent trigger for suicidal germination of Striga hermonthica seeds; susceptible to soybean rust, bacterial pustule, and pod-sucking bugs.",
+      "verified": false,
+      "source": null
+    }
+  }
+]

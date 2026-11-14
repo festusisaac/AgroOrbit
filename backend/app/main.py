@@ -11,7 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.climate import compute_climate_summary
 from app.config import CORS_ORIGINS
-from app.mock_data import MOCK_CROPS, MOCK_LOCATIONS, get_mock_climate, get_mock_recommendations
+from app.knowledge import get_crops_api_summary, load_locations
+from app.mock_data import get_mock_climate, get_mock_recommendations
 from app.models import (
     ClimateResponse,
     CropItem,
@@ -44,7 +45,7 @@ nasa_power_client = NasaPowerClient()
 
 def find_preset_location_label(lat: float, lon: float) -> Optional[str]:
     """Finds if given coordinates correspond closely to a preset demo location."""
-    for loc in MOCK_LOCATIONS:
+    for loc in load_locations():
         if abs(loc.lat - lat) < 0.25 and abs(loc.lon - lon) < 0.25:
             return f"{loc.name} ({loc.zone})"
     return None
@@ -59,13 +60,13 @@ def health_check() -> HealthResponse:
 @app.get("/locations", response_model=List[LocationItem])
 def get_locations() -> List[LocationItem]:
     """Return preset demo locations for northern Nigeria and the Middle Belt."""
-    return MOCK_LOCATIONS
+    return load_locations()
 
 
 @app.get("/crops", response_model=List[CropItem])
 def get_crops() -> List[CropItem]:
     """Return catalog of supported crops with trait summaries and verification status."""
-    return MOCK_CROPS
+    return get_crops_api_summary()
 
 
 @app.get("/climate", response_model=ClimateResponse)

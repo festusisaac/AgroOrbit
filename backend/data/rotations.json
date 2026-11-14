@@ -1,0 +1,50 @@
+[
+  {
+    "id": "continuous_maize",
+    "name": "Continuous Maize (Baseline)",
+    "sequence": ["maize", "maize", "maize"],
+    "description": "Monoculture maize baseline; common in cereal production zones but prone to soil nitrogen depletion and pest buildup."
+  },
+  {
+    "id": "continuous_sorghum",
+    "name": "Continuous Sorghum (Baseline)",
+    "sequence": ["sorghum", "sorghum", "sorghum"],
+    "description": "Monoculture sorghum baseline; drought-tolerant cereal monoculture common in drier northern districts."
+  },
+  {
+    "id": "maize_cowpea_sorghum",
+    "name": "Diversified Grain-Legume-Sorghum",
+    "sequence": ["maize", "cowpea", "sorghum"],
+    "description": "Balances grain production with a short-duration nitrogen-fixing legume break crop, followed by drought-hardy sorghum."
+  },
+  {
+    "id": "sorghum_groundnut_pearl_millet",
+    "name": "Drought-Resilient Savanna Rotation",
+    "sequence": ["sorghum", "groundnut", "pearl_millet"],
+    "description": "Engineered for drier savanna zones, alternating deep-rooted drought cereals with groundnut."
+  },
+  {
+    "id": "maize_soybean_maize",
+    "name": "Soybean Nitrogen Restoration",
+    "sequence": ["maize", "soybean", "maize"],
+    "description": "Uses soybean in year 2 to stimulate suicidal germination of Striga weed seeds and replenish soil nitrogen."
+  },
+  {
+    "id": "pearl_millet_cowpea_pearl_millet",
+    "name": "Short-Duration Sahelian Rotation",
+    "sequence": ["pearl_millet", "cowpea", "pearl_millet"],
+    "description": "Short-maturity rotation suited for shortened rainy seasons and marginal rainfall areas."
+  },
+  {
+    "id": "maize_groundnut_sorghum",
+    "name": "Cash-Food Balanced Rotation",
+    "sequence": ["maize", "groundnut", "sorghum"],
+    "description": "Provides high market-value groundnut as a cash crop break between staple food cereals."
+  },
+  {
+    "id": "sorghum_cowpea_groundnut",
+    "name": "Double Legume Soil Rebuilding",
+    "sequence": ["sorghum", "cowpea", "groundnut"],
+    "description": "Intensive soil recovery sequence incorporating two successive legume years with high fodder value."
+  }
+]

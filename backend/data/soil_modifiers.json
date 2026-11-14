@@ -1,0 +1,144 @@
+{
+  "texture": {
+    "sandy": {
+      "water_fit_modifier": -15,
+      "erosion_risk_factor": 1.25,
+      "organic_matter_benefit_factor": 1.30,
+      "notes": "Low water-holding capacity; magnifies dry spell impact on high-water crops like maize.",
+      "verified": false,
+      "source": null
+    },
+    "loam": {
+      "water_fit_modifier": 0,
+      "erosion_risk_factor": 1.0,
+      "organic_matter_benefit_factor": 1.0,
+      "notes": "Balanced soil texture with optimal water-holding capacity and aeration; neutral baseline.",
+      "verified": false,
+      "source": null
+    },
+    "clay": {
+      "water_fit_modifier": 5,
+      "erosion_risk_factor": 0.85,
+      "waterlogging_risk": true,
+      "notes": "High water retention buffers against short dry spells, but presents waterlogging risk under heavy rains.",
+      "verified": false,
+      "source": null
+    },
+    "unknown": {
+      "water_fit_modifier": 0,
+      "erosion_risk_factor": 1.0,
+      "organic_matter_benefit_factor": 1.0,
+      "notes": "Texture unknown; no modifier applied, lowers data confidence.",
+      "verified": false,
+      "source": null
+    }
+  },
+  "drainage": {
+    "poor": {
+      "waterlogging_penalty": -20,
+      "aeration_penalty": -10,
+      "notes": "Prone to seasonal saturation; penalizes crops sensitive to waterlogging (maize, groundnut).",
+      "verified": false,
+      "source": null
+    },
+    "moderate": {
+      "waterlogging_penalty": 0,
+      "aeration_penalty": 0,
+      "notes": "Standard field drainage with minimal saturation risk.",
+      "verified": false,
+      "source": null
+    },
+    "well": {
+      "waterlogging_penalty": 0,
+      "aeration_penalty": 0,
+      "water_loss_acceleration": -5,
+      "notes": "Rapid infiltration; minimizes standing water but may require higher organic matter to retain moisture.",
+      "verified": false,
+      "source": null
+    },
+    "unknown": {
+      "waterlogging_penalty": 0,
+      "notes": "Drainage status unknown; flags need for local soil assessment.",
+      "verified": false,
+      "source": null
+    }
+  },
+  "organic_matter": {
+    "low": {
+      "soil_health_need_multiplier": 1.30,
+      "water_buffer_penalty": -10,
+      "notes": "Degraded soil structure; increases priority for residue-building and nitrogen-fixing crops.",
+      "verified": false,
+      "source": null
+    },
+    "medium": {
+      "soil_health_need_multiplier": 1.0,
+      "water_buffer_penalty": 0,
+      "notes": "Moderate baseline fertility typical of savanna croplands.",
+      "verified": false,
+      "source": null
+    },
+    "high": {
+      "soil_health_need_multiplier": 0.80,
+      "water_buffer_bonus": 10,
+      "notes": "High organic matter provides moisture buffering and soil microbial activity.",
+      "verified": false,
+      "source": null
+    },
+    "unknown": {
+      "soil_health_need_multiplier": 1.0,
+      "water_buffer_penalty": 0,
+      "notes": "Organic matter level unmeasured; lowers data confidence.",
+      "verified": false,
+      "source": null
+    }
+  },
+  "water_source": {
+    "rain_fed": {
+      "climate_dependency": 1.0,
+      "notes": "Fully dependent on NASA POWER rainfall timing and quantity.",
+      "verified": false,
+      "source": null
+    },
+    "limited_irrigation": {
+      "climate_dependency": 0.65,
+      "dry_spell_buffer": 15,
+      "notes": "Supplemental irrigation available during critical flowering dry spells.",
+      "verified": false,
+      "source": null
+    },
+    "irrigated": {
+      "climate_dependency": 0.25,
+      "dry_spell_buffer": 30,
+      "notes": "Full irrigation system; water fit criteria decoupled from seasonal dry spells.",
+      "verified": false,
+      "source": null
+    }
+  },
+  "slope": {
+    "flat": {
+      "erosion_risk_weight": 0.70,
+      "notes": "Minimal runoff velocity; lower erosion risk.",
+      "verified": false,
+      "source": null
+    },
+    "gentle": {
+      "erosion_risk_weight": 1.0,
+      "notes": "Standard undulating savanna topography; standard erosion risk.",
+      "verified": false,
+      "source": null
+    },
+    "steep": {
+      "erosion_risk_weight": 1.50,
+      "notes": "High runoff and topsoil loss risk; heavily weights ground cover traits.",
+      "verified": false,
+      "source": null
+    },
+    "unknown": {
+      "erosion_risk_weight": 1.0,
+      "notes": "Field slope unmeasured; neutral weighting with documented information gap.",
+      "verified": false,
+      "source": null
+    }
+  }
+}

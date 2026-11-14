@@ -88,3 +88,19 @@ BARE_FIELD_WETNESS_MAX: float = float(os.getenv("BARE_FIELD_WETNESS_MAX", "0.30"
 
 # Missing data tolerance for flagging a season (%)
 SEASON_MISSING_DATA_MAX_PCT: float = float(os.getenv("SEASON_MISSING_DATA_MAX_PCT", "10.0"))
+
+# ============================================================================
+# Crop-Window Indicator Constants (Section 6.2)
+# ============================================================================
+# Planting delay after onset date (days, default 0, range 0-7)
+PLANTING_DELAY_DAYS: int = int(os.getenv("PLANTING_DELAY_DAYS", "0"))
+
+# Safety buffer required between crop physiological maturity and cessation (days)
+CROP_SEASON_BUFFER_DAYS: int = int(os.getenv("CROP_SEASON_BUFFER_DAYS", "10"))
+
+# Critical/flowering window boundaries (% of crop duration from window start)
+CRITICAL_WINDOW_START_PCT: float = float(os.getenv("CRITICAL_WINDOW_START_PCT", "0.25"))
+CRITICAL_WINDOW_END_PCT: float = float(os.getenv("CRITICAL_WINDOW_END_PCT", "0.60"))
+
+# Threshold of consecutive dry days in the critical flowering window (days)
+MID_SEASON_DRY_SPELL_MAX_DAYS: int = int(os.getenv("MID_SEASON_DRY_SPELL_MAX_DAYS", "7"))
