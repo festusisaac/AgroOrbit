@@ -11,9 +11,10 @@ Strictly adheres to Section 6.2 of AGROORBIT_PLAN_v2.md:
 - Bare-field window: Low-rain, low-wetness months (basis='proxy').
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
+from pydantic import BaseModel, Field
 
 from app.config import (
     BARE_FIELD_RAIN_P50_MAX_MM,
@@ -22,9 +23,13 @@ from app.config import (
     CESSATION_SEARCH_END_MMDD,
     CESSATION_SEARCH_START_MMDD,
     CESSATION_WINDOW_DAYS,
+    CROP_SEASON_BUFFER_DAYS,
+    CRITICAL_WINDOW_END_PCT,
+    CRITICAL_WINDOW_START_PCT,
     DRY_DAY_THRESHOLD_MM,
     DRY_SPELL_CRITICAL_DAYS,
     HEAT_STRESS_THRESHOLD_C,
+    MID_SEASON_DRY_SPELL_MAX_DAYS,
     NASA_POWER_COMMUNITY,
     NASA_POWER_TIME_STANDARD,
     ONSET_MAX_DRY_SPELL_DAYS,
@@ -32,6 +37,7 @@ from app.config import (
     ONSET_RAIN_3DAY_MM,
     ONSET_SEARCH_END_MMDD,
     ONSET_SEARCH_START_MMDD,
+    PLANTING_DELAY_DAYS,
     SEASON_MISSING_DATA_MAX_PCT,
 )
 from app.models import (
@@ -487,3 +493,280 @@ def compute_climate_summary(
         bare_field_window=bare_field,
         data_quality=data_quality,
     )
+
+
+# ============================================================================
+# Crop-Window Indicator Models & Functions (Section 6.2)
+# ============================================================================
+class CropYearIndicator(BaseModel):
+    """Evaluation of a specific crop in a single calendar year."""
+    year: int
+    crop_id: str
+    crop_duration_days: int
+    water_need_min_mm: float
+    onset_date: Optional[str]
+    cessation_date: Optional[str]
+    available_season_days: Optional[int]
+    window_start: Optional[str]
+    window_end: Optional[str]
+    can_complete: bool
+    window_rain_mm: float
+    water_ok: bool
+    mid_season_dry_spell: bool
+    heat_days: int
+    quality_flag: str
+
+
+class CropFrequencyMetric(BaseModel):
+    """Aggregated empirical frequency across historical years."""
+    success_years: int
+    total_valid_years: int
+    frequency_pct: float
+    formatted: str  # e.g. "22 of 30 years"
+    flagged_years_excluded: int
+
+
+class CropClimateIndicators(BaseModel):
+    """Complete multi-decadal climate fit profile for a single crop."""
+    crop_id: str
+    crop_name: str
+    duration_days: int
+    water_need_min_mm: float
+    total_years_evaluated: int
+    valid_years_count: int
+    flagged_years_count: int
+
+    can_complete_freq: CropFrequencyMetric
+    water_ok_freq: CropFrequencyMetric
+    critical_dry_spell_risk_freq: CropFrequencyMetric
+    heat_stress_risk_freq: CropFrequencyMetric
+
+    window_rain_median_mm: float
+    window_rain_p20_mm: float
+    heat_days_median: int
+    yearly_indicators: List[CropYearIndicator]
+
+
+def get_crop_agronomic_requirements(crop: Any) -> Tuple[str, str, int, float, float]:
+    """Extracts (crop_id, crop_name, duration_days_midpoint, water_need_min_mm, heat_threshold_c).
+
+    Accepts crop_id string, CropRecord instance, or raw dictionary.
+    """
+    if isinstance(crop, str):
+        from app.knowledge import load_crops
+        crops_dict = load_crops()
+        if crop not in crops_dict:
+            # Graceful fallback for unknown crop IDs per Section 12
+            return crop, crop.capitalize(), 90, 450.0, HEAT_STRESS_THRESHOLD_C
+        crop = crops_dict[crop]
+
+    crop_id = crop.id if hasattr(crop, "id") else crop.get("id", "unknown")
+    crop_name = crop.name if hasattr(crop, "name") else crop.get("name", crop_id.capitalize())
+    traits = crop.traits if hasattr(crop, "traits") else crop.get("traits", {})
+
+    # 1. Season duration (midpoint)
+    season_trait = traits.get("season_days")
+    season_val = (
+        season_trait.value
+        if hasattr(season_trait, "value")
+        else (season_trait.get("value") if isinstance(season_trait, dict) else season_trait)
+    )
+    if isinstance(season_val, dict) and "min" in season_val and "max" in season_val:
+        duration_days = int(round((season_val["min"] + season_val["max"]) / 2.0))
+    elif isinstance(season_val, (int, float)):
+        duration_days = int(season_val)
+    else:
+        duration_days = 90
+
+    # 2. Minimum water requirement
+    water_trait = traits.get("water_need_mm")
+    water_val = (
+        water_trait.value
+        if hasattr(water_trait, "value")
+        else (water_trait.get("value") if isinstance(water_trait, dict) else water_trait)
+    )
+    if isinstance(water_val, dict) and "min" in water_val:
+        water_min = float(water_val["min"])
+    elif isinstance(water_val, (int, float)):
+        water_min = float(water_val)
+    else:
+        water_min = 400.0
+
+    heat_thresh = HEAT_STRESS_THRESHOLD_C
+    return crop_id, crop_name, duration_days, water_min, heat_thresh
+
+
+def evaluate_crop_year(
+    crop: Any,
+    year: int,
+    rain: pd.Series,
+    t2m_max: pd.Series,
+    season_row: pd.Series,
+    planting_delay_days: int = PLANTING_DELAY_DAYS,
+    buffer_days: int = CROP_SEASON_BUFFER_DAYS,
+    heat_threshold_c: float = HEAT_STRESS_THRESHOLD_C,
+) -> CropYearIndicator:
+    """Evaluates crop performance metrics for a single growing season."""
+    crop_id, _, duration, water_min, _ = get_crop_agronomic_requirements(crop)
+
+    # Exclude incomplete years or seasons where onset/cessation failed
+    quality_flag = str(season_row.get("quality_flag", "unknown"))
+    if quality_flag != "ok" or pd.isna(season_row.get("onset_date")) or pd.isna(season_row.get("cessation_date")):
+        return CropYearIndicator(
+            year=year,
+            crop_id=crop_id,
+            crop_duration_days=duration,
+            water_need_min_mm=water_min,
+            onset_date=None,
+            cessation_date=None,
+            available_season_days=None,
+            window_start=None,
+            window_end=None,
+            can_complete=False,
+            window_rain_mm=0.0,
+            water_ok=False,
+            mid_season_dry_spell=False,
+            heat_days=0,
+            quality_flag=quality_flag,
+        )
+
+    onset = pd.Timestamp(season_row["onset_date"])
+    cessation = pd.Timestamp(season_row["cessation_date"])
+    avail_days = int(season_row["length_days"])
+
+    # Define crop window: onset + planting_delay to + duration
+    window_start = onset + pd.Timedelta(days=planting_delay_days)
+    window_end = window_start + pd.Timedelta(days=duration - 1)
+
+    # 1. can_complete: crop duration (+ buffer) <= available season length
+    can_complete = bool((duration + buffer_days) <= avail_days)
+
+    # 2. window_rain_mm: total rainfall in crop window
+    rain_slice = rain.loc[(rain.index >= window_start) & (rain.index <= window_end)]
+    window_rain_mm = round(float(rain_slice.sum(skipna=True)), 1) if not rain_slice.empty else 0.0
+
+    # 3. water_ok: window_rain_mm >= water_need_min
+    water_ok = bool(window_rain_mm >= water_min)
+
+    # 4. mid_season_dry_spell: run > 7 days (rain < 1mm) in 25-60% flowering window
+    crit_start = window_start + pd.Timedelta(days=int(duration * CRITICAL_WINDOW_START_PCT))
+    crit_end = window_start + pd.Timedelta(days=int(duration * CRITICAL_WINDOW_END_PCT))
+    crit_slice = rain.loc[(rain.index >= crit_start) & (rain.index <= crit_end)]
+    max_dry_days = _max_consecutive_dry_days(crit_slice, threshold_mm=DRY_DAY_THRESHOLD_MM)
+    mid_season_dry_spell = bool(max_dry_days > MID_SEASON_DRY_SPELL_MAX_DAYS)
+
+    # 5. heat_days: days with Tmax > threshold inside crop window
+    if not t2m_max.empty:
+        heat_slice = t2m_max.loc[(t2m_max.index >= window_start) & (t2m_max.index <= window_end)]
+        heat_days = int((heat_slice > heat_threshold_c).sum())
+    else:
+        heat_days = 0
+
+    return CropYearIndicator(
+        year=year,
+        crop_id=crop_id,
+        crop_duration_days=duration,
+        water_need_min_mm=water_min,
+        onset_date=onset.strftime("%Y-%m-%d"),
+        cessation_date=cessation.strftime("%Y-%m-%d"),
+        available_season_days=avail_days,
+        window_start=window_start.strftime("%Y-%m-%d"),
+        window_end=window_end.strftime("%Y-%m-%d"),
+        can_complete=can_complete,
+        window_rain_mm=window_rain_mm,
+        water_ok=water_ok,
+        mid_season_dry_spell=mid_season_dry_spell,
+        heat_days=heat_days,
+        quality_flag="ok",
+    )
+
+
+def compute_crop_climate_indicators(
+    crop: Any,
+    df: pd.DataFrame,
+    seasons_df: Optional[pd.DataFrame] = None,
+    planting_delay_days: int = PLANTING_DELAY_DAYS,
+    buffer_days: int = CROP_SEASON_BUFFER_DAYS,
+    heat_threshold_c: float = HEAT_STRESS_THRESHOLD_C,
+) -> CropClimateIndicators:
+    """Computes multi-decadal historical climate fit metrics and frequencies for a crop.
+
+    Strictly excludes flagged/incomplete years from frequencies.
+    """
+    if "PRECTOTCORR" not in df.columns:
+        raise ValueError("DataFrame must contain 'PRECTOTCORR' column.")
+
+    rain = df["PRECTOTCORR"]
+    t2m_max = df["T2M_MAX"] if "T2M_MAX" in df.columns else pd.Series(dtype=float)
+
+    if seasons_df is None:
+        seasons_df = calculate_annual_seasons(df)
+
+    crop_id, crop_name, duration, water_min, _ = get_crop_agronomic_requirements(crop)
+
+    yearly_results: List[CropYearIndicator] = []
+    for y in sorted(seasons_df.index):
+        season_row = seasons_df.loc[y]
+        indicator = evaluate_crop_year(
+            crop=crop,
+            year=int(y),
+            rain=rain,
+            t2m_max=t2m_max,
+            season_row=season_row,
+            planting_delay_days=planting_delay_days,
+            buffer_days=buffer_days,
+            heat_threshold_c=heat_threshold_c,
+        )
+        yearly_results.append(indicator)
+
+    valid_years = [y for y in yearly_results if y.quality_flag == "ok"]
+    n_valid = len(valid_years)
+    n_total = len(yearly_results)
+    n_flagged = n_total - n_valid
+
+    def make_freq(count: int) -> CropFrequencyMetric:
+        pct = round((count / n_valid) * 100.0, 1) if n_valid > 0 else 0.0
+        fmt = f"{count} of {n_valid} years" if n_valid > 0 else "0 of 0 years"
+        return CropFrequencyMetric(
+            success_years=count,
+            total_valid_years=n_valid,
+            frequency_pct=pct,
+            formatted=fmt,
+            flagged_years_excluded=n_flagged,
+        )
+
+    # Frequency counts across valid years
+    can_complete_cnt = sum(1 for y in valid_years if y.can_complete)
+    water_ok_cnt = sum(1 for y in valid_years if y.water_ok)
+    dry_spell_cnt = sum(1 for y in valid_years if y.mid_season_dry_spell)
+    heat_stress_cnt = sum(1 for y in valid_years if y.heat_days > 0)
+
+    # Rainfall and heat distribution
+    if valid_years:
+        rains = [y.window_rain_mm for y in valid_years]
+        median_rain = round(float(np.median(rains)), 1)
+        p20_rain = round(float(np.percentile(rains, 20)), 1)
+        median_heat = int(np.median([y.heat_days for y in valid_years]))
+    else:
+        median_rain = 0.0
+        p20_rain = 0.0
+        median_heat = 0
+
+    return CropClimateIndicators(
+        crop_id=crop_id,
+        crop_name=crop_name,
+        duration_days=duration,
+        water_need_min_mm=water_min,
+        total_years_evaluated=n_total,
+        valid_years_count=n_valid,
+        flagged_years_count=n_flagged,
+        can_complete_freq=make_freq(can_complete_cnt),
+        water_ok_freq=make_freq(water_ok_cnt),
+        critical_dry_spell_risk_freq=make_freq(dry_spell_cnt),
+        heat_stress_risk_freq=make_freq(heat_stress_cnt),
+        window_rain_median_mm=median_rain,
+        window_rain_p20_mm=p20_rain,
+        heat_days_median=median_heat,
+        yearly_indicators=yearly_results,
+    )
+

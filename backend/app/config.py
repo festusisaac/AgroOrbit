@@ -104,3 +104,26 @@ CRITICAL_WINDOW_END_PCT: float = float(os.getenv("CRITICAL_WINDOW_END_PCT", "0.6
 
 # Threshold of consecutive dry days in the critical flowering window (days)
 MID_SEASON_DRY_SPELL_MAX_DAYS: int = int(os.getenv("MID_SEASON_DRY_SPELL_MAX_DAYS", "7"))
+
+# ============================================================================
+# Scoring Engine Constants (Section 8)
+# ============================================================================
+# Fixed safety weight for season_fit regardless of farmer priorities
+SAFETY_WEIGHT_SEASON_FIT: float = float(os.getenv("SAFETY_WEIGHT_SEASON_FIT", "0.10"))
+
+# Feasibility gate minimum completion percentage
+FEASIBILITY_COMPLETION_MIN_PCT: float = float(os.getenv("FEASIBILITY_COMPLETION_MIN_PCT", "50.0"))
+
+# Fit category score thresholds
+SCORE_STRONG_MIN: float = float(os.getenv("SCORE_STRONG_MIN", "75.0"))
+SCORE_MODERATE_MIN: float = float(os.getenv("SCORE_MODERATE_MIN", "55.0"))
+
+# Score difference threshold to mark rotations as similar (do not imply clear winner)
+SCORE_SIMILARITY_THRESHOLD: float = float(os.getenv("SCORE_SIMILARITY_THRESHOLD", "5.0"))
+
+# Algorithm and climate period metadata (Section 8.4 Trace)
+ALGORITHM_VERSION: str = "0.2.0"
+CLIMATE_PERIOD: str = "1991-2025"
+DISCLAIMER_TEXT: str = (
+    "AgroOrbit supports decisions. It does not replace local farmer knowledge or agricultural advisers."
+)

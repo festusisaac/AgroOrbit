@@ -24,6 +24,19 @@ This document tracks every assumption, heuristic constant, unverified agronomic 
 | `DRY_SPELL_CRITICAL_DAYS` | `7 days` | Duration of consecutive rainless days inside the growing season considered a significant stress event. | false | backend |
 | `BARE_FIELD_RAIN_P50_MAX_MM` | `10.0 mm` | Monthly median rainfall ceiling to classify a dry-season month into the bare-field proxy window. | false | backend |
 | `BARE_FIELD_WETNESS_MAX` | `0.30` | Regional root-zone wetness ceiling to classify a month into the bare-field proxy window. | false | backend |
+| `PLANTING_DELAY_DAYS` | `0 days` (configurable 0–7) | Days elapsed between the detected onset date and field sowing/tillage. Default 0 assumes immediate planting on safe onset. | false | backend |
+| `CROP_SEASON_BUFFER_DAYS` | `10 days` | Safety buffer required between crop physiological maturity and season cessation to allow grain drying and harvest. | false | backend |
+| `CRITICAL_WINDOW_START_PCT` | `0.25` (25% of duration) | Assumed onset of crop reproductive / flowering phase where moisture stress causes irreversible floret abortion. | false | backend |
+| `CRITICAL_WINDOW_END_PCT` | `0.60` (60% of duration) | Assumed termination of flowering and early grain-filling sensitive phase. | false | backend |
+| `MID_SEASON_DRY_SPELL_MAX_DAYS` | `7 days` | Consecutive rainless days during the flowering window (25–60% duration) that constitutes a critical yield-damaging dry spell. | false | backend |
+| `SAFETY_WEIGHT_SEASON_FIT` | `0.10` (10%) | Fixed safety weighting applied to season_fit regardless of farmer priorities to prevent unfeasible rotations from ranking well. | false | backend |
+| `FEASIBILITY_COMPLETION_MIN_PCT` | `50.0%` | Hard gate: any sequence with a crop failing season completion in >50% of years is capped at 'weak' fit category. | false | backend |
+| `SCORE_STRONG_MIN` | `75.0` | Lower score threshold for 'strong' fit category. | false | backend |
+| `SCORE_MODERATE_MIN` | `55.0` | Lower score threshold for 'moderate' fit category (scores < 55 are 'weak'). | false | backend |
+| `SCORE_SIMILARITY_THRESHOLD` | `5.0 points` | Maximum score delta below which two rotations are classified as similar options rather than declaring a clear winner. | false | backend |
+| `ALGORITHM_VERSION` | `0.2.0` | Recommendation engine version tracked in rotation trace metadata for auditability. | true | backend |
+| `CLIMATE_PERIOD` | `1991-2025` | 35-year historical climate baseline period used for empirical frequency distributions. | true | backend |
+| Candidate Return Caps | Min 3, Max 5 | The engine always returns the farmer's existing rotation plus at least 2 distinct alternatives, capped at 5 total recommendations. | false | backend |
 | Maize Trait Placeholders | Duration: 90–120d, Water: 500–800mm, Drought: 2/5, Heat: 2/5, Residue: 3/5, Cover: 2/5, Forage: 3/5, Root: medium | Plausible placeholder agronomic traits for unimodal savanna maize. Unverified pending national extension citation. | false | agronomy placeholder |
 | Sorghum Trait Placeholders | Duration: 100–140d, Water: 400–650mm, Drought: 4/5, Heat: 4/5, Residue: 4/5, Cover: 3/5, Forage: 3/5, Root: deep | Plausible placeholder agronomic traits for savanna grain sorghum varieties. | false | agronomy placeholder |
 | Pearl Millet Trait Placeholders | Duration: 75–100d, Water: 300–500mm, Drought: 5/5, Heat: 5/5, Residue: 3/5, Cover: 2/5, Forage: 3/5, Root: deep | Plausible placeholder agronomic traits for drought-tolerant Sahelian pearl millet. | false | agronomy placeholder |

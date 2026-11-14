@@ -198,3 +198,147 @@ def get_crops_api_summary(file_path: Path = CROPS_FILE) -> List[CropItem]:
         )
 
     return summary_list
+
+
+def generate_candidate_rotations(
+    current_rotation: List[str],
+    library_rotations: Optional[List[RotationRecord]] = None,
+    crops_dict: Optional[Dict[str, CropRecord]] = None,
+    preferred_crops: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
+    """Generates and deduplicates candidate rotations adhering to Section 7.3:
+
+    - Always includes the farmer's existing rotation (is_existing=True).
+    - Includes pre-defined library sequences (from rotations.json).
+    - Generates dynamic 3-year sequences combining legumes and drought-tolerant crops.
+    - Strictly deduplicates across all candidates.
+    """
+    if library_rotations is None:
+        library_rotations = load_rotations()
+    if crops_dict is None:
+        crops_dict = load_crops()
+
+    if preferred_crops is None:
+        preferred_crops = []
+
+    normalized_current = [c.strip().lower() for c in current_rotation if c.strip()]
+    if not normalized_current:
+        normalized_current = ["maize", "maize", "maize"]
+    elif len(normalized_current) < 3:
+        # Pad to 3 years with last crop
+        normalized_current = (normalized_current + [normalized_current[-1]] * 3)[:3]
+    elif len(normalized_current) > 3:
+        normalized_current = normalized_current[:3]
+
+    candidates_by_seq: Dict[tuple, Dict[str, Any]] = {}
+
+    # 1. Always include farmer's current rotation
+    existing_tuple = tuple(normalized_current)
+    crop_display_names = [
+        crops_dict[c].name if c in crops_dict else c.capitalize()
+        for c in existing_tuple
+    ]
+    candidates_by_seq[existing_tuple] = {
+        "id": "existing",
+        "label": f"Your current rotation: {' → '.join(crop_display_names)}",
+        "is_existing": True,
+        "sequence": list(existing_tuple),
+        "description": "Farmer's baseline cropping pattern for direct comparison against climate indicators and alternatives.",
+    }
+
+    # 2. Add library rotations from rotations.json
+    for r in library_rotations:
+        seq_tuple = tuple(c.strip().lower() for c in r.sequence)
+        if seq_tuple == existing_tuple:
+            # Matches existing rotation, preserve is_existing flag
+            continue
+        if seq_tuple not in candidates_by_seq:
+            candidates_by_seq[seq_tuple] = {
+                "id": r.id,
+                "label": r.name,
+                "is_existing": False,
+                "sequence": list(seq_tuple),
+                "description": r.description,
+            }
+
+    # 3. Dynamic candidate generation from crop knowledge base
+    # Classify available crops
+    legumes = []
+    drought_tolerant = []
+    cereals = []
+
+    for cid, crop in crops_dict.items():
+        if crop.traits.get("nitrogen_fixing") and crop.traits["nitrogen_fixing"].value is True:
+            legumes.append(cid)
+        d_val = crop.traits.get("drought_tolerance")
+        if d_val and isinstance(d_val.value, (int, float)) and d_val.value >= 4:
+            drought_tolerant.append(cid)
+        if crop.family == "Poaceae":
+            cereals.append(cid)
+
+    # Fallbacks if trait filtering yields empty
+    if not legumes:
+        legumes = ["cowpea", "groundnut", "soybean"]
+    if not drought_tolerant:
+        drought_tolerant = ["sorghum", "pearl_millet"]
+    if not cereals:
+        cereals = ["maize", "sorghum", "pearl_millet"]
+
+    pref_clean = [p.strip().lower() for p in preferred_crops if p.strip().lower() in crops_dict]
+
+    # Pattern A: Cereal -> Legume -> Drought Cereal
+    for cer in cereals:
+        for leg in legumes:
+            for d_cer in drought_tolerant:
+                seq = (cer, leg, d_cer)
+                if seq not in candidates_by_seq:
+                    c1_name = crops_dict[cer].name if cer in crops_dict else cer.capitalize()
+                    c2_name = crops_dict[leg].name if leg in crops_dict else leg.capitalize()
+                    c3_name = crops_dict[d_cer].name if d_cer in crops_dict else d_cer.capitalize()
+                    candidates_by_seq[seq] = {
+                        "id": f"gen_{cer}_{leg}_{d_cer}",
+                        "label": f"Diversified {c1_name} - {c2_name} - {c3_name}",
+                        "is_existing": False,
+                        "sequence": list(seq),
+                        "description": f"Generated 3-year sequence combining staple grain ({c1_name}), nitrogen-fixing legume break ({c2_name}), and drought-hardy finish ({c3_name}).",
+                    }
+
+    # Pattern B: Legume -> Cereal -> Legume (Intensive soil regeneration)
+    for leg1 in legumes:
+        for cer in cereals:
+            for leg2 in legumes:
+                if leg1 == leg2:
+                    continue
+                seq = (leg1, cer, leg2)
+                if seq not in candidates_by_seq:
+                    c1_name = crops_dict[leg1].name if leg1 in crops_dict else leg1.capitalize()
+                    c2_name = crops_dict[cer].name if cer in crops_dict else cer.capitalize()
+                    c3_name = crops_dict[leg2].name if leg2 in crops_dict else leg2.capitalize()
+                    candidates_by_seq[seq] = {
+                        "id": f"gen_{leg1}_{cer}_{leg2}",
+                        "label": f"Double Legume Rebuilding: {c1_name} - {c2_name} - {c3_name}",
+                        "is_existing": False,
+                        "sequence": list(seq),
+                        "description": f"Intensive fertility-rebuilding sequence alternating two distinct legumes with a central cereal crop.",
+                    }
+
+    # Pattern C: Preferred crop integration
+    for pref in pref_clean:
+        for leg in legumes:
+            for alt in cereals + drought_tolerant:
+                if alt == pref:
+                    continue
+                seq = (pref, leg, alt)
+                if seq not in candidates_by_seq:
+                    c1_name = crops_dict[pref].name if pref in crops_dict else pref.capitalize()
+                    c2_name = crops_dict[leg].name if leg in crops_dict else leg.capitalize()
+                    c3_name = crops_dict[alt].name if alt in crops_dict else alt.capitalize()
+                    candidates_by_seq[seq] = {
+                        "id": f"gen_pref_{pref}_{leg}_{alt}",
+                        "label": f"Preferred {c1_name} - {c2_name} - {c3_name}",
+                        "is_existing": False,
+                        "sequence": list(seq),
+                        "description": f"Generated rotation integrating your preferred crop ({c1_name}) with legume nitrogen fixation and risk diversification.",
+                    }
+
+    return list(candidates_by_seq.values())
