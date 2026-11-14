@@ -15,11 +15,11 @@ import {
 
 export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-const RAIN_COLORS = { p20: '#d5dfd0', p50: '#8aa88f', p80: '#2c5c40' }
-const TEMP_COLOR = '#9a6a2f'
-const WET_COLOR = '#4f7f63'
-const GRID = '#e6e1d5'
-const AXIS = '#d8d2c3'
+const RAIN_COLORS = { p20: '#dbeafe', p50: '#93c5fd', p80: '#2f80ed' }
+const TEMP_COLOR = '#f59e0b'
+const WET_COLOR = '#2f80ed'
+const GRID = '#e6eef8'
+const AXIS = '#d6e4f2'
 
 function ChartTooltip({ active, payload, label, unit = '' }) {
   if (!active || !payload || payload.length === 0) return null
@@ -48,7 +48,7 @@ export function RainfallChart({ monthly }) {
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={GRID} />
         <XAxis dataKey="month" tickFormatter={(m) => MONTHS[m - 1]} tickLine={false} axisLine={{ stroke: AXIS }} />
         <YAxis tickLine={false} axisLine={false} width={46} />
-        <Tooltip content={<ChartTooltip unit=" mm" />} cursor={{ fill: 'rgba(44, 102, 71, 0.06)' }} />
+        <Tooltip content={<ChartTooltip unit=" mm" />} cursor={{ fill: 'rgba(47, 128, 237, 0.06)' }} />
         <Bar dataKey="rain_p20" name="P20 · dry" fill={RAIN_COLORS.p20} radius={[2, 2, 0, 0]} isAnimationActive={false} />
         <Bar dataKey="rain_p50" name="P50 · typical" fill={RAIN_COLORS.p50} radius={[2, 2, 0, 0]} isAnimationActive={false} />
         <Bar dataKey="rain_p80" name="P80 · wet" fill={RAIN_COLORS.p80} radius={[2, 2, 0, 0]} isAnimationActive={false} />
@@ -67,9 +67,9 @@ export function TemperatureChart({ monthly, threshold = 35 }) {
         <Tooltip content={<ChartTooltip unit=" °C" />} />
         <ReferenceLine
           y={threshold}
-          stroke="#a34a33"
+          stroke="#ef4444"
           strokeDasharray="4 4"
-          label={{ value: `Heat threshold ${threshold}°C`, position: 'insideTopLeft', fill: '#8a3a2c', fontSize: 10 }}
+          label={{ value: `Heat threshold ${threshold}°C`, position: 'insideTopLeft', fill: '#b91c1c', fontSize: 10 }}
         />
         <Line
           type="monotone"
