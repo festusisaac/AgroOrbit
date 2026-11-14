@@ -429,3 +429,165 @@ def select_and_rank_recommendations(
         evaluated_rotations=final_selection,
         similarity_threshold=similarity_threshold,
     )
+
+
+def generate_recommendations(
+    payload: Any,
+    nasa_power_client: Optional[Any] = None,
+    df: Optional[Any] = None,
+    meta: Optional[Dict[str, Any]] = None,
+) -> Any:
+    """Full end-to-end recommendation pipeline.
+
+    Computes multi-decadal indicators, generates candidate rotations,
+    scores criteria, applies feasibility gate, evaluates confidences,
+    and returns RecommendResponse with evidence-based explanations.
+    """
+    from app.climate import calculate_annual_seasons, compute_crop_climate_indicators
+    from app.config import DISCLAIMER_TEXT
+    from app.explain import build_rotation_recommendation
+    from app.knowledge import (
+        generate_candidate_rotations,
+        load_crops,
+        load_rotations,
+        load_soil_modifiers,
+    )
+    from app.models import RecommendResponse
+    from app.quality import (
+        determine_overall_outcome,
+        evaluate_data_confidence,
+        evaluate_knowledge_support,
+    )
+
+    if df is None:
+        if nasa_power_client is None:
+            from app.nasa_power import NasaPowerClient
+            nasa_power_client = NasaPowerClient()
+        df, fetched_meta = nasa_power_client.fetch_daily_data(lat=payload.lat, lon=payload.lon)
+        if meta is None:
+            meta = fetched_meta
+
+    if meta is None:
+        meta = {}
+
+    missing_pct = float(meta.get("overall_missing_pct", 0.0))
+    quality_flags = list(meta.get("quality_flags", []))
+
+    # Scenario sensitivity perturbation if requested (Section 8.5)
+    if hasattr(payload, "scenario") and payload.scenario:
+        scen = payload.scenario
+        rain_chg = getattr(scen, "rainfall_change_pct", 0.0)
+        temp_chg = getattr(scen, "temperature_change_c", 0.0)
+        if rain_chg != 0.0 or temp_chg != 0.0:
+            df = df.copy()
+            if rain_chg != 0.0 and "PRECTOTCORR" in df.columns:
+                df["PRECTOTCORR"] = df["PRECTOTCORR"] * (1.0 + rain_chg / 100.0)
+            if temp_chg != 0.0:
+                if "T2M" in df.columns:
+                    df["T2M"] = df["T2M"] + temp_chg
+                if "T2M_MAX" in df.columns:
+                    df["T2M_MAX"] = df["T2M_MAX"] + temp_chg
+                if "T2M_MIN" in df.columns:
+                    df["T2M_MIN"] = df["T2M_MIN"] + temp_chg
+
+    seasons_df = calculate_annual_seasons(df)
+
+    crops_dict = load_crops()
+    rotations_lib = load_rotations()
+    soil_modifiers = load_soil_modifiers()
+
+    # Determine all unique crops needing indicators
+    all_needed_crops = set(crops_dict.keys())
+    for c in payload.current_rotation:
+        c_clean = c.strip().lower()
+        if c_clean:
+            all_needed_crops.add(c_clean)
+
+    crop_indicators_map: Dict[str, Any] = {}
+    for cid in all_needed_crops:
+        crop_obj = crops_dict.get(cid, cid)
+        crop_indicators_map[cid] = compute_crop_climate_indicators(
+            crop=crop_obj,
+            df=df,
+            seasons_df=seasons_df,
+        )
+
+    # 1. Generate all candidate sequences
+    candidates = generate_candidate_rotations(
+        current_rotation=payload.current_rotation,
+        library_rotations=rotations_lib,
+        crops_dict=crops_dict,
+        preferred_crops=payload.preferred_crops,
+    )
+
+    # 2. Score every candidate
+    weights = compute_criteria_weights(payload.priorities)
+    scored_candidates = []
+    for cand in candidates:
+        criteria, passed, risks = calculate_criteria_scores(
+            sequence=cand["sequence"],
+            crop_indicators_map=crop_indicators_map,
+            crops_dict=crops_dict,
+            soil=payload.soil,
+            preferred_crops=payload.preferred_crops,
+            soil_modifiers=soil_modifiers,
+        )
+        score, fit_cat, contribs = score_rotation(
+            criteria=criteria,
+            weights=weights,
+            feasibility_passed=passed,
+        )
+        cand_entry = dict(cand)
+        cand_entry["score"] = score
+        cand_entry["fit_category"] = fit_cat
+        cand_entry["criteria"] = criteria
+        cand_entry["contributions"] = contribs
+        cand_entry["feasibility_passed"] = passed
+        cand_entry["feasibility_risks"] = risks
+        scored_candidates.append(cand_entry)
+
+    # 3. Select recommendations (existing + >=2 distinct alternatives, max 5, sorted by score)
+    selected = select_and_rank_recommendations(scored_candidates, max_total=5)
+
+    # 4. Evaluate confidences & outcome
+    data_confidence = evaluate_data_confidence(
+        missing_pct=missing_pct,
+        quality_flags=quality_flags,
+        soil=payload.soil,
+    )
+    knowledge_support = evaluate_knowledge_support(
+        crops=list(crops_dict.values()),
+        priority_weights=weights,
+    )
+    overall_outcome, outcome_message = determine_overall_outcome(
+        ranked_rotations=selected,
+        data_confidence=data_confidence,
+        knowledge_support=knowledge_support,
+    )
+
+    # 5. Build full recommendations with explanations
+    recommendations = []
+    for cand in selected:
+        rec = build_rotation_recommendation(
+            candidate=cand,
+            criteria=cand["criteria"],
+            weights=weights,
+            contributions=cand["contributions"],
+            feasibility_passed=cand["feasibility_passed"],
+            feasibility_risks=cand["feasibility_risks"],
+            data_confidence=data_confidence,
+            knowledge_support=knowledge_support,
+            crop_indicators_map=crop_indicators_map,
+            crops_dict=crops_dict,
+            priorities=payload.priorities,
+            soil=payload.soil,
+            preferred_crops=payload.preferred_crops,
+        )
+        recommendations.append(rec)
+
+    return RecommendResponse(
+        overall_outcome=overall_outcome,
+        outcome_message=outcome_message,
+        rotations=recommendations,
+        disclaimer=DISCLAIMER_TEXT,
+    )

@@ -22,6 +22,7 @@ from app.models import (
     RecommendResponse,
 )
 from app.nasa_power import NasaPowerClient
+from app.scoring import generate_recommendations
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +111,17 @@ def get_climate(
 def recommend_rotations(payload: RecommendRequest) -> RecommendResponse:
     """Evaluate and compare at least 3 crop-rotation strategies against climate indicators.
 
-    NOTE: Phase 1 returns realistic mock data. Rule-based scoring engine follows in Phase 4.
+    Uses real multi-decadal NASA POWER data (or local disk cache), rule-based criteria scoring,
+    and evidence-based explanations. Falls back to mock recommendations only when NASA and cache fail.
     """
-    return get_mock_recommendations(payload)
+    try:
+        return generate_recommendations(payload=payload, nasa_power_client=nasa_power_client)
+    except Exception as e:
+        logger.warning(
+            f"Failed to generate recommendations from NASA POWER data or cache for ({payload.lat}, {payload.lon}): {e}. "
+            "Falling back to mock recommendations."
+        )
+        fallback = get_mock_recommendations(payload)
+        for r in fallback.rotations:
+            r.data_confidence.reasons.append("nasa_and_cache_failed_mock_fallback")
+        return fallback
