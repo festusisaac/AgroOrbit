@@ -1,4 +1,4 @@
-/* ---------- Cards ---------- */
+/* ---------- Postbox cards ---------- */
 
 .card {
   background: var(--surface);
@@ -10,45 +10,44 @@
 .card__head {
   display: flex;
   align-items: flex-start;
-  gap: 0.65rem;
-  padding: 1rem 1.1rem;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 100%);
+  background: var(--surface-2);
 }
 .card__head-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: var(--green-50);
-  border: 1px solid var(--green-100);
-  color: var(--green-700);
+  width: 22px;
+  height: 22px;
   flex: 0 0 auto;
+  color: var(--green-700);
 }
 .card__head-icon .icon {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
 }
 .card__title {
-  font-size: 0.975rem;
-  font-weight: 650;
+  font-size: 0.95rem;
+  font-weight: 700;
   line-height: 1.3;
+  letter-spacing: -0.005em;
 }
 .card__subtitle {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--ink-3);
-  margin-top: 0.15rem;
+  margin-top: 0.1rem;
+  line-height: 1.45;
 }
 .card__head .spacer {
   flex: 1 1 auto;
 }
 .card__body {
-  padding: 1.1rem;
+  padding: 1rem;
 }
 .card__body--tight {
-  padding: 0.9rem 1.1rem;
+  padding: 0.8rem 1rem;
 }
 .card__body--flush {
   padding: 0;
@@ -78,11 +77,13 @@
   left: 0.6rem;
   bottom: 0.6rem;
   z-index: 500;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 254, 251, 0.95);
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0.3rem 0.5rem;
-  font-size: 0.72rem;
+  border-radius: 3px;
+  padding: 0.28rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.02em;
   color: var(--ink-2);
   pointer-events: none;
 }
@@ -97,7 +98,7 @@
   padding: 0.55rem 0.7rem;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   color: var(--ink-2);
 }
@@ -112,7 +113,7 @@
 .preset-list {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -122,9 +123,9 @@
   align-items: center;
   gap: 0.6rem;
   width: 100%;
-  padding: 0.6rem 0.7rem;
+  padding: 0.55rem 0.65rem;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   text-align: left;
   cursor: pointer;
@@ -143,8 +144,8 @@
   display: inline-flex;
 }
 .preset__pin .icon {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 .preset__text {
   display: flex;
@@ -153,20 +154,21 @@
 }
 .preset__name {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.86rem;
+  font-weight: 650;
   color: var(--ink);
   line-height: 1.3;
 }
 .preset__zone {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--ink-3);
   line-height: 1.3;
 }
 .preset__coords {
   margin-left: auto;
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
   color: var(--ink-4);
   font-variant-numeric: tabular-nums;
 }
@@ -179,9 +181,11 @@
   gap: 0.6rem;
 }
 .rotation-year .label {
-  font-size: 0.72rem;
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   color: var(--ink-3);
   margin-bottom: 0.3rem;
 }
@@ -196,19 +200,19 @@
 .chip-picker {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 .pick-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.42rem 0.7rem;
+  padding: 0.4rem 0.62rem;
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-tag);
   background: var(--surface);
   color: var(--ink-2);
-  font-size: 0.8125rem;
-  font-weight: 550;
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease,
     color 0.15s ease;
@@ -223,8 +227,8 @@
   color: var(--green-900);
 }
 .pick-chip .tick {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   opacity: 0;
   color: var(--green-700);
 }
@@ -252,7 +256,7 @@
 }
 .priority__name {
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--ink);
 }
 .priority__value {
@@ -261,12 +265,13 @@
   align-items: center;
   justify-content: center;
   min-width: 26px;
-  height: 24px;
+  height: 23px;
   padding: 0 0.4rem;
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--surface-3);
   border: 1px solid var(--line);
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
@@ -279,7 +284,9 @@
 .priority__scale {
   display: flex;
   justify-content: space-between;
-  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
   color: var(--ink-4);
   margin-top: 0.1rem;
 }
@@ -296,13 +303,12 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.55rem 0;
-  border-bottom: 1px dashed var(--line);
+  border-bottom: 1px solid var(--line);
   font-size: 0.82rem;
 }
 .summary-list li:last-child {
   border-bottom: 0;
 }
-.summary-list dt,
 .summary-list .k {
   color: var(--ink-3);
 }
@@ -318,7 +324,7 @@
   padding: 0.65rem 0.75rem;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 /* ---------- Tabs ---------- */
@@ -326,12 +332,11 @@
 .tabs {
   display: flex;
   gap: 0.25rem;
-  padding: 0.3rem;
-  background: var(--surface);
+  padding: 0.25rem;
+  background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   margin-bottom: 1rem;
-  box-shadow: var(--shadow-sm);
 }
 .tab {
   flex: 1 1 0;
@@ -341,11 +346,11 @@
   gap: 0.45rem;
   padding: 0.55rem 0.75rem;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 4px;
   background: transparent;
   color: var(--ink-3);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 650;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
@@ -354,13 +359,14 @@
   color: var(--ink);
 }
 .tab[aria-selected="true"] {
-  background: var(--green-50);
-  border-color: var(--green-100);
+  background: var(--surface);
+  border-color: var(--line);
   color: var(--green-900);
+  box-shadow: inset 0 -2px 0 var(--green-700);
 }
 .tab .icon {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 @media (max-width: 560px) {
   .tab__label-extra {
@@ -376,7 +382,7 @@
   align-items: flex-start;
   padding: 1rem 1.1rem;
   border: 1px solid var(--line);
-  border-left-width: 4px;
+  border-left-width: 3px;
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
@@ -395,9 +401,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
   flex: 0 0 auto;
   background: var(--surface-3);
   color: var(--ink-2);
@@ -415,13 +421,14 @@
   color: var(--red-700);
 }
 .outcome__icon .icon {
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
 }
 .outcome__title {
-  font-size: 0.975rem;
-  font-weight: 650;
-  margin-bottom: 0.15rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+  margin-bottom: 0.1rem;
 }
 .outcome__text {
   font-size: 0.85rem;
@@ -445,18 +452,20 @@
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 0.85rem 0.9rem;
+  padding: 0.8rem 0.9rem;
   box-shadow: var(--shadow-sm);
+  border-top: 2px solid var(--green-700);
 }
 .stat__label {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
   color: var(--ink-3);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 .stat__label .icon {
   width: 13px;
@@ -464,23 +473,25 @@
   color: var(--green-700);
 }
 .stat__value {
-  margin-top: 0.25rem;
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  margin-top: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 1.32rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
 .stat__unit {
-  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--ink-3);
-  margin-left: 0.15rem;
+  margin-left: 0.18rem;
 }
 .stat__foot {
   font-size: 0.72rem;
   color: var(--ink-3);
-  margin-top: 0.1rem;
+  margin-top: 0.15rem;
 }
 
 /* ---------- Loading / error ---------- */
@@ -501,16 +512,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
   background: var(--surface-3);
   color: var(--ink-2);
   margin-bottom: 0.85rem;
 }
 .state__icon .icon {
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
 }
 .state--error .state__icon {
   background: var(--red-100);
@@ -518,7 +529,7 @@
 }
 .state__title {
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 700;
 }
 .state__text {
   font-size: 0.85rem;
@@ -586,7 +597,7 @@
   padding: 0.55rem 0.65rem;
   background: var(--green-950);
   color: #f3f7f3;
-  border-radius: 7px;
+  border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.45;
@@ -651,8 +662,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 1rem;
-  margin-top: 0.4rem;
-  font-size: 0.72rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
   color: var(--ink-3);
 }
 .chart-legend span {
@@ -661,9 +674,9 @@
   gap: 0.35rem;
 }
 .chart-legend i {
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
   display: inline-block;
 }
 .recharts-cartesian-axis-tick-value {
@@ -676,15 +689,18 @@
 .chart-tooltip {
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: 4px;
   box-shadow: var(--shadow-md);
   padding: 0.55rem 0.65rem;
   font-size: 0.75rem;
 }
 .chart-tooltip__title {
-  font-weight: 650;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   margin-bottom: 0.3rem;
-  color: var(--ink);
+  color: var(--ink-2);
 }
 .chart-tooltip__row {
   display: flex;
@@ -695,14 +711,14 @@
 .chart-tooltip__row i {
   width: 8px;
   height: 8px;
-  border-radius: 2px;
+  border-radius: 1px;
 }
 .chart-tooltip__row b {
   margin-left: auto;
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Data source list ---------- */
+/* ---------- Data lists ---------- */
 
 .meta-list {
   margin: 0;
@@ -714,7 +730,7 @@
   display: flex;
   gap: 0.6rem;
   padding: 0.5rem 0;
-  border-bottom: 1px dashed var(--line);
+  border-bottom: 1px solid var(--line);
 }
 .meta-list li:last-child {
   border-bottom: 0;
@@ -726,14 +742,14 @@
 }
 .meta-list .v {
   color: var(--ink);
-  font-weight: 550;
+  font-weight: 600;
 }
 .callout {
   display: flex;
   gap: 0.55rem;
   align-items: flex-start;
   padding: 0.7rem 0.8rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   border: 1px solid var(--line);
   font-size: 0.78rem;
@@ -748,7 +764,7 @@
   color: var(--green-700);
 }
 
-/* ---------- Definition list (disclaimer) ---------- */
+/* ---------- Disclaimer ---------- */
 
 .disclaimer {
   display: flex;
@@ -756,8 +772,9 @@
   align-items: flex-start;
   margin-top: 1.5rem;
   padding: 0.85rem 1rem;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  border-left: 2px solid var(--green-700);
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   font-size: 0.8rem;
   color: var(--ink-2);

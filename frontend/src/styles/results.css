@@ -18,7 +18,7 @@
 }
 .rotation-card--top {
   border-color: var(--green-200);
-  box-shadow: 0 0 0 1px var(--green-100), var(--shadow-md);
+  box-shadow: inset 0 3px 0 var(--green-700), var(--shadow-sm);
 }
 
 .rotation-card__head {
@@ -35,10 +35,11 @@
   flex: 0 0 auto;
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: 3px;
   border: 1px solid var(--line);
   background: var(--surface-3);
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
   font-weight: 700;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
@@ -135,7 +136,8 @@
   line-height: 1;
 }
 .score-ring__num {
-  font-size: 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 1.08rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
@@ -153,11 +155,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.72rem;
+  padding: 0.2rem 0.48rem;
+  border-radius: var(--radius-tag);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
   font-weight: 700;
-  text-transform: capitalize;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   border: 1px solid var(--line);
   background: var(--surface-3);
   color: var(--ink-2);
@@ -207,7 +211,7 @@
 .why-block {
   position: relative;
   padding: 0.7rem 0.85rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--green-50);
   border: 1px solid var(--green-100);
   font-size: 0.86rem;
@@ -234,10 +238,13 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 650;
-  color: var(--ink-2);
-  margin-bottom: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.45rem;
 }
 .subhead .icon {
   width: 14px;
@@ -288,7 +295,7 @@
 .evidence {
   margin-top: 1rem;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   overflow: hidden;
 }
@@ -330,8 +337,9 @@
   color: var(--ink-3);
   background: var(--surface-3);
   border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
+  border-radius: 3px;
   padding: 0.05rem 0.4rem;
+  font-family: var(--font-mono);
 }
 .evidence__body {
   padding: 0.2rem 0.8rem 0.8rem;
@@ -355,11 +363,12 @@
 .source-tag {
   display: inline-flex;
   align-items: center;
-  padding: 0.1rem 0.4rem;
-  border-radius: 5px;
-  font-size: 0.64rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   border: 1px solid var(--line);
   background: var(--surface-3);
@@ -461,11 +470,13 @@
 .level-chip {
   display: inline-flex;
   align-items: center;
-  padding: 0.12rem 0.45rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.68rem;
+  padding: 0.12rem 0.42rem;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
   font-weight: 700;
-  text-transform: capitalize;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   border: 1px solid var(--line);
   background: var(--surface-3);
   color: var(--ink-2);
@@ -504,7 +515,7 @@
   align-items: flex-start;
   margin-top: 1rem;
   padding: 0.6rem 0.7rem;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   border: 1px solid var(--line);
   font-size: 0.78rem;
@@ -545,7 +556,7 @@
   padding: 0.6rem;
   background: var(--surface-3);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 0.68rem;
   line-height: 1.5;

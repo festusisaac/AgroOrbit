@@ -28,9 +28,9 @@ export default function MapPicker({ lat, lon, onPick }) {
 
     const marker = L.circleMarker(hasPoint ? [lat, lon] : NIGERIA_CENTER, {
       radius: 9,
-      color: '#2c6647',
+      color: '#2c5c40',
       weight: 2,
-      fillColor: '#377a56',
+      fillColor: '#387151',
       fillOpacity: 0.35,
     })
     if (hasPoint) marker.addTo(map)

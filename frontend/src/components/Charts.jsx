@@ -15,11 +15,11 @@ import {
 
 export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-const RAIN_COLORS = { p20: '#cfe4d5', p50: '#7fb394', p80: '#2c6647' }
-const TEMP_COLOR = '#a9762f'
-const WET_COLOR = '#4e8f74'
-const GRID = '#e8ece6'
-const AXIS = '#e2e7df'
+const RAIN_COLORS = { p20: '#d5dfd0', p50: '#8aa88f', p80: '#2c5c40' }
+const TEMP_COLOR = '#9a6a2f'
+const WET_COLOR = '#4f7f63'
+const GRID = '#e6e1d5'
+const AXIS = '#d8d2c3'
 
 function ChartTooltip({ active, payload, label, unit = '' }) {
   if (!active || !payload || payload.length === 0) return null
@@ -67,9 +67,9 @@ export function TemperatureChart({ monthly, threshold = 35 }) {
         <Tooltip content={<ChartTooltip unit=" °C" />} />
         <ReferenceLine
           y={threshold}
-          stroke="#b4472f"
+          stroke="#a34a33"
           strokeDasharray="4 4"
-          label={{ value: `Heat threshold ${threshold}°C`, position: 'insideTopLeft', fill: '#9f2d2d', fontSize: 10 }}
+          label={{ value: `Heat threshold ${threshold}°C`, position: 'insideTopLeft', fill: '#8a3a2c', fontSize: 10 }}
         />
         <Line
           type="monotone"

@@ -120,13 +120,13 @@ export default function ClimateView({ climate }) {
             </div>
             <div className="chart-legend">
               <span>
-                <i style={{ background: '#cfe4d5' }} /> P20 · drier than usual
+                <i style={{ background: '#d5dfd0' }} /> P20 · drier than usual
               </span>
               <span>
-                <i style={{ background: '#7fb394' }} /> P50 · typical
+                <i style={{ background: '#8aa88f' }} /> P50 · typical
               </span>
               <span>
-                <i style={{ background: '#2c6647' }} /> P80 · wetter than usual
+                <i style={{ background: '#2c5c40' }} /> P80 · wetter than usual
               </span>
             </div>
           </div>
