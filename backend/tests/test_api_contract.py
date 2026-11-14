@@ -1,5 +1,6 @@
 """Contract tests checking that API responses match Section 9 of the AgroOrbit plan."""
 
+from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
@@ -11,6 +12,7 @@ from app.models import (
     LocationItem,
     RecommendResponse,
 )
+from app.nasa_power import NasaPowerApiError
 
 client = TestClient(app)
 
@@ -55,23 +57,38 @@ def test_get_crops():
         assert isinstance(crop.traits_summary, dict)
 
 
-def test_get_climate_schema():
-    """Verify GET /climate returns all climate indicator fields matching Section 9."""
-    response = client.get("/climate?lat=12.0&lon=8.5")
+def test_get_climate_real_cached_data():
+    """Verify GET /climate returns real computed indicators from cached NASA POWER data for Kano."""
+    response = client.get("/climate?lat=12.0022&lon=8.5920")
     assert response.status_code == 200
     data = response.json()
 
     # Pydantic validation ensures exact contract conformance
     validated = ClimateResponse(**data)
-    assert validated.location.lat == 12.0
-    assert validated.location.lon == 8.5
+    assert validated.location.lat == 12.0022
+    assert validated.location.lon == 8.5920
+    assert "Kano" in validated.location.label
+    assert validated.data_quality.from_cache is True
     assert len(validated.monthly) == 12
-    assert validated.season.length_days_median > 0
-    assert validated.season_rain_total.median_mm > 0
-    assert validated.dry_spells.avg_per_season >= 0
-    assert validated.heat_stress_days.threshold_c == 35.0
-    assert validated.bare_field_window.basis in ["proxy", "observed"]
-    assert isinstance(validated.data_quality.from_cache, bool)
+    # Verify realistic Savanna season parameters
+    assert 130 <= validated.season.onset_doy_median <= 180  # Late May to June
+    assert 250 <= validated.season.cessation_doy_median <= 300  # Late Sept to October
+    assert validated.season.length_days_median >= 90
+    assert validated.season_rain_total.median_mm > 400
+    assert validated.bare_field_window.basis == "proxy"
+
+
+def test_get_climate_fallback_to_mock_when_nasa_and_cache_fail():
+    """Verify GET /climate falls back to mock data only when NASA and cache both fail."""
+    with patch("app.main.nasa_power_client.fetch_daily_data", side_effect=NasaPowerApiError("Network timeout")):
+        response = client.get("/climate?lat=12.0022&lon=8.5920")
+        assert response.status_code == 200
+        data = response.json()
+
+        validated = ClimateResponse(**data)
+        assert validated.data_quality.from_cache is False
+        assert "nasa_and_cache_failed_mock_fallback" in validated.data_quality.flags
+        assert "Mock Fallback" in validated.location.label
 
 
 def test_post_recommend_schema():
