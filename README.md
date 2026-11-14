@@ -1,4 +1,4 @@
-# AgroOrbit 🛰️🌾
+# AgroOrbit
 
 > **NASA Space Apps Challenge 2026** · *Field Shift: Adapting Farms with NASA Data*  
 > **Team:** Kepler's Kids · **Local Event:** Luxembourg
