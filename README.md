@@ -37,7 +37,7 @@ AgroOrbit is an open-source, decision-support web application that harnesses 35+
 
 ## Key Features
 
-### 🛰️ 1. Multi-Decadal NASA Earth Observation Engine
+### 1. Multi-Decadal NASA Earth Observation Engine
 * Connects directly to the **NASA POWER API** (Prediction Of Worldwide Energy Resources) daily point meteorology.
 * Analyzes **35 years (1991–2025)** of daily satellite measurements:
   * `PRECTOTCORR`: Precipitation corrected ($mm/day$)
@@ -52,12 +52,12 @@ AgroOrbit is an open-source, decision-support web application that harnesses 35+
   * **Dry Spell Frequency:** Runs of $>7$ consecutive rainless days ($<1\text{ mm}$) during the active crop flowering window.
   * **Thermal Stress:** Days exceeding crop-specific critical temperature thresholds ($>35^\circ C$).
 
-### 🌱 2. Agronomic Crop Simulation & Feasibility Gate
+### 2. Agronomic Crop Simulation & Feasibility Gate
 * Models 9 regional staple crops: **Maize, Sorghum, Pearl Millet, Cowpea, Groundnut, Soybean, Cassava, Rice, and Yam**.
 * Evaluates crop water requirements, season maturity days, root depth, erosion protection factor, and nitrogen fixation capacity.
 * **The Safety-First Feasibility Gate:** If a crop fails to reach maturity before season cessation in $\ge 50\%$ of historical years, the entire rotation sequence is capped at **"Weak"**, ensuring high-risk monocropping or late-maturing varieties are never recommended as safe options.
 
-### ⚖️ 3. Multi-Objective Deterministic Scoring
+### 3. Multi-Objective Deterministic Scoring
 * 100% deterministic, rule-based scoring engine with zero hallucination.
 * Evaluates 8 distinct criteria:
   1. `season_fit`: Growing season length vs. crop maturity (includes a mandatory 10% safety weight).
@@ -69,20 +69,20 @@ AgroOrbit is an open-source, decision-support web application that harnesses 35+
   7. `heat_drought_resilience`: Tolerance to high heat days and mid-season dry spells.
   8. `break_benefit`: Pest and disease interruption between cereal cycles.
 
-### 🔍 4. Transparent Explainability & Auditable Evidence
+### 4. Transparent Explainability & Auditable Evidence
 * Every recommendation includes plain-language justifications:
   * **Why Suggested:** Specific agronomic rationale (e.g. *"Cowpea fixes nitrogen into the soil, reducing synthetic fertilizer costs for the next season's maize"*).
   * **NASA Evidence with Real Empirical Frequencies:** (e.g. *"Completed growth cycle before season end in 29 of 35 years"*).
   * **Information Gaps:** Honest accounting of unverified traits or unknown soil characteristics.
   * **Risks for Local Review:** Flags localized concerns like certified seed availability, heat-tolerant cultivars, and soil inoculants.
 
-### 🌡️ 5. Climate Sensitivity Stress-Testing
+### 5. Climate Sensitivity Stress-Testing
 * Built-in scenario modeler allows testing "what-if" climate disruptions:
   * Rainfall perturbations ($-30\%$ to $+30\%$).
   * Temperature shifts ($0^\circ C$ to $+3.0^\circ C$).
 * Reruns the entire 35-year daily sequence under perturbed conditions and labels outputs as hypothetical sensitivity tests.
 
-### 🎨 6. Accessible, Responsive Frontend
+### 6. Accessible, Responsive Frontend
 * **Auto-Loading on Launch:** Automatically runs the comparison on startup for instant feedback.
 * **Interactive Onboarding Modal:** New visitors are greeted with pre-filled, editable farm setup options (country, region, current crops, soil, and priorities).
 * **Worldwide Map & Coordinate Picker:** Select any farm worldwide via interactive satellite maps or GPS geolocation.
