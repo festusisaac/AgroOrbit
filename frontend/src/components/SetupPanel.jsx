@@ -428,6 +428,9 @@ function ExtrasSection({ form, setForm, crops }) {
         <span className="tag">Optional</span>
       </summary>
       <div className="setup-card__body" style={{ paddingTop: '0.2rem' }}>
+        <p className="hint" style={{ marginBottom: '0.6rem' }}>
+          Optional. These only fine-tune the score — leave them if you are unsure.
+        </p>
         <div className="soil-grid">
           {Object.entries(SOIL_OPTIONS).map(([key, options]) => (
             <div className="field" key={key}>
@@ -456,6 +459,9 @@ function ExtrasSection({ form, setForm, crops }) {
 
         <p className="label" style={{ marginTop: '0.75rem' }}>
           Preferred crops
+        </p>
+        <p className="hint" style={{ marginTop: '-0.15rem' }}>
+          Crops you want to sell — lifts the Market score.
         </p>
         <div className="chip-picker" style={{ marginTop: '0.3rem' }}>
           {crops.map((crop) => {
@@ -527,6 +533,7 @@ export default function SetupPanel({
   form,
   setForm,
   crops,
+  showField = true,
 }) {
   const cropMap = Object.fromEntries(crops.map((c) => [c.id, c]))
   const rotation = (form.current_rotation || []).map((id) => cropMap[id]?.name || id)
@@ -534,7 +541,9 @@ export default function SetupPanel({
 
   return (
     <aside className="setup">
-      <FieldSection locations={locations} value={location} onChange={onLocationChange} />
+      {showField ? (
+        <FieldSection locations={locations} value={location} onChange={onLocationChange} />
+      ) : null}
       <RotationSection form={form} setForm={setForm} crops={crops} />
       <PrioritiesSection form={form} setForm={setForm} />
       <ExtrasSection form={form} setForm={setForm} crops={crops} />

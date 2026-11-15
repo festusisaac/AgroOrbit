@@ -1,15 +1,25 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { BadgeCheck } from 'lucide-react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { ChevronDown, Loader2, Sparkles } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import MobileNav from './components/MobileNav'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
 import SetupPanel from './components/SetupPanel'
-import EmptyState from './components/EmptyState'
 import ResultsView from './components/ResultsView'
 import HowItWorks from './components/HowItWorks'
+import GlassWeather from './components/GlassWeather'
 import { api, mockApi, hasBackend } from './api/client'
 import { CROPS, LOCATIONS } from './api/mockData'
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  DEFAULT_REGION,
+  findCountry,
+  findRegion,
+  locationFromRegion,
+} from './data/regions'
+
+const MapPicker = lazy(() => import('./components/MapPicker'))
 
 const INITIAL_FORM = {
   current_rotation: ['maize', 'maize', 'maize'],
@@ -33,10 +43,12 @@ const INITIAL_FORM = {
 }
 
 const inputKeyOf = (location, form) => JSON.stringify([location, form])
-const DEFAULT_LOCATION = { ...LOCATIONS[0], label: LOCATIONS[0].name }
+const DEFAULT_LOCATION = locationFromRegion(findRegion(DEFAULT_COUNTRY, DEFAULT_REGION))
 
 export default function App() {
   const [location, setLocation] = useState(DEFAULT_LOCATION)
+  const [countryId, setCountryId] = useState(DEFAULT_COUNTRY)
+  const [regionId, setRegionId] = useState(DEFAULT_REGION)
   const [form, setForm] = useState(INITIAL_FORM)
   const [crops, setCrops] = useState(CROPS)
   const [locations, setLocations] = useState(LOCATIONS)
@@ -48,35 +60,18 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false)
   const [climate, setClimate] = useState(null)
   const [climateStatus, setClimateStatus] = useState('idle')
+  const [weather, setWeather] = useState(null)
+  const [weatherStatus, setWeatherStatus] = useState('loading')
   const [howOpen, setHowOpen] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('top')
 
   const requestRef = useRef(0)
   const lastKeyRef = useRef('')
   const outputRef = useRef(null)
-  const locationTouchedRef = useRef(false)
-  const autoLocateRef = useRef(false)
 
-  useEffect(() => {
-    if (autoLocateRef.current || !navigator.geolocation) return
-    autoLocateRef.current = true
-    let active = true
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        if (!active || locationTouchedRef.current) return
-        setLocation({
-          lat: Number(position.coords.latitude.toFixed(4)),
-          lon: Number(position.coords.longitude.toFixed(4)),
-          label: 'My location',
-        })
-      },
-      () => {},
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 },
-    )
-    return () => {
-      active = false
-    }
-  }, [])
+  const country = findCountry(countryId)
+  const regions = country.regions
 
   useEffect(() => {
     let active = true
@@ -97,6 +92,27 @@ export default function App() {
       active = false
     }
   }, [usingDemo])
+
+  // Weather for the glass panel (independent of the comparison)
+  useEffect(() => {
+    let active = true
+    setWeatherStatus('loading')
+    setWeather(null)
+    const client = !hasBackend || usingDemo ? mockApi : api
+    client
+      .getClimate(location.lat, location.lon)
+      .then((next) => {
+        if (!active) return
+        setWeather(next)
+        setWeatherStatus('ready')
+      })
+      .catch(() => {
+        if (active) setWeatherStatus('error')
+      })
+    return () => {
+      active = false
+    }
+  }, [location.lat, location.lon, usingDemo])
 
   const runComparison = useCallback(
     async ({ demo = false, quiet = false } = {}) => {
@@ -145,6 +161,8 @@ export default function App() {
         if (clim.status === 'fulfilled') {
           setClimate(clim.value)
           setClimateStatus('ready')
+          setWeather(clim.value)
+          setWeatherStatus('ready')
         } else if (!quiet) {
           setClimateStatus('error')
         }
@@ -169,13 +187,26 @@ export default function App() {
   const busy = status === 'loading' || refreshing
 
   const handleLocationChange = (next) => {
-    locationTouchedRef.current = true
     setLocation(next)
   }
 
+  const handleCountry = (id) => {
+    const nextCountry = findCountry(id)
+    const nextRegion = nextCountry.regions[0]
+    setCountryId(id)
+    setRegionId(nextRegion.id)
+    setLocation(locationFromRegion(nextRegion))
+  }
+
+  const handleRegion = (id) => {
+    setRegionId(id)
+    setLocation(locationFromRegion(findRegion(countryId, id)))
+  }
+
   const handleNavigate = (id) => {
-    const target = document.getElementById(id) ? id : id === 'climate' ? 'compare' : 'top'
-    setActiveSection(target)
+    const target =
+      id === 'field' ? 'top' : document.getElementById(id) ? id : id === 'climate' ? 'compare' : 'top'
+    setActiveSection(id)
     document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
@@ -197,6 +228,8 @@ export default function App() {
   const restart = () => {
     requestRef.current += 1
     lastKeyRef.current = ''
+    setCountryId(DEFAULT_COUNTRY)
+    setRegionId(DEFAULT_REGION)
     setLocation(DEFAULT_LOCATION)
     setForm(INITIAL_FORM)
     setUsingDemo(!hasBackend)
@@ -206,6 +239,7 @@ export default function App() {
     setClimate(null)
     setClimateStatus('idle')
     setRefreshing(false)
+    setSetupOpen(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -223,60 +257,125 @@ export default function App() {
 
         <main className="page">
           <div className="container page__inner">
-            <section className="hero" id="top">
-              <img className="hero__img" src="/img/maize-sunset.jpg" alt="" />
-              <div className="hero__shade" aria-hidden="true" />
-              <div className="hero__body">
-                <p className="hero__eyebrow">NASA Space Apps 2026 · Field Shift</p>
-                <h1>Find the best rotation for your farm.</h1>
-                <p>Pick a field. Set priorities. See what fits.</p>
+            <section className="explore" id="top">
+              <div className="explore__map">
+                <Suspense
+                  fallback={
+                    <div className="map-frame map-frame--hero">
+                      <div className="map map--gl map--loading">
+                        <span>Loading map…</span>
+                      </div>
+                    </div>
+                  }
+                >
+                  <MapPicker
+                    lat={location?.lat}
+                    lon={location?.lon}
+                    onPick={(lat, lon) =>
+                      handleLocationChange({ lat, lon, label: 'Custom field' })
+                    }
+                  />
+                </Suspense>
+                <GlassWeather weather={weather} status={weatherStatus} location={location} />
               </div>
-              <div className="hero__nasa">
-                <span className="hero__nasa-ball">NASA</span>
-                <span>
-                  NASA data
-                  <b>Powered</b>
-                </span>
-                <BadgeCheck className="icon" aria-hidden="true" />
+
+              <div className="explore__panel">
+                <p className="eyebrow">NASA Space Apps 2026 · Field Shift</p>
+                <h1>See what grows best on your land.</h1>
+                <p className="explore__sub">
+                  Choose a country and region. We read 30+ years of NASA satellite climate —
+                  anywhere in the world.
+                </p>
+
+                <div className="region-picker">
+                  <label className="region-field">
+                    <span>Country</span>
+                    <select value={countryId} onChange={(e) => handleCountry(e.target.value)}>
+                      {COUNTRIES.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.flag} {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="region-field">
+                    <span>Region</span>
+                    <select value={regionId} onChange={(e) => handleRegion(e.target.value)}>
+                      {regions.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-primary btn-lg explore__cta"
+                  onClick={handleRun}
+                  disabled={busy}
+                >
+                  {busy ? (
+                    <Loader2 className="icon spin" aria-hidden="true" />
+                  ) : (
+                    <Sparkles className="icon" aria-hidden="true" />
+                  )}
+                  {busy ? 'Reading the climate…' : 'Compare rotations'}
+                </button>
+                <p className="explore__hint">
+                  {usingDemo ? 'Demo data' : 'Live NASA data'} · works worldwide
+                </p>
+
+                <button
+                  type="button"
+                  className="setup-toggle"
+                  aria-expanded={setupOpen}
+                  onClick={() => setSetupOpen((v) => !v)}
+                >
+                  {setupOpen ? 'Hide advanced setup' : 'Advanced setup · optional'}
+                  <ChevronDown className={`icon ${setupOpen ? 'is-open' : ''}`} aria-hidden="true" />
+                </button>
+
+                {setupOpen ? (
+                  <div className="explore__setup">
+                    <SetupPanel
+                      locations={locations}
+                      location={location}
+                      onLocationChange={handleLocationChange}
+                      form={form}
+                      setForm={setForm}
+                      crops={crops}
+                      showField={false}
+                    />
+                  </div>
+                ) : null}
               </div>
             </section>
 
-            <div className="workspace">
-              <SetupPanel
-                locations={locations}
-                location={location}
-                onLocationChange={handleLocationChange}
-                form={form}
-                setForm={setForm}
-                crops={crops}
-              />
-
+            {status !== 'idle' ? (
               <div className="output" id="compare" ref={outputRef} aria-live="polite">
-                {status === 'idle' ? (
-                  <EmptyState hasLocation={Boolean(location)} running={busy} onRun={handleRun} />
-                ) : (
-                  <ResultsView
-                    status={status}
-                    data={results}
-                    error={error}
-                    climate={climate}
-                    climateStatus={climateStatus}
-                    location={location}
-                    crops={crops}
-                    usingDemo={usingDemo || !hasBackend}
-                    refreshing={refreshing}
-                    onRetry={handleRun}
-                    onUseDemo={handleUseDemo}
-                  />
-                )}
+                <ResultsView
+                  status={status}
+                  data={results}
+                  error={error}
+                  climate={climate}
+                  climateStatus={climateStatus}
+                  location={location}
+                  crops={crops}
+                  usingDemo={usingDemo || !hasBackend}
+                  refreshing={refreshing}
+                  onRetry={handleRun}
+                  onUseDemo={handleUseDemo}
+                />
               </div>
-            </div>
+            ) : null}
 
             <section className="method" id="about">
               <div>
-                <p className="eyebrow">Score guide</p>
-                <h2>Scored the same way.</h2>
-                <p>NASA climate + crop rules + your priorities.</p>
+                <p className="eyebrow">How it works</p>
+                <h2>NASA climate + crop rules.</h2>
+                <p>30+ years of satellites, scored the same way everywhere.</p>
               </div>
               <div className="scale">
                 <div className="scale__item scale__item--strong">

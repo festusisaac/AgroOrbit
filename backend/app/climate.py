@@ -312,6 +312,13 @@ def calculate_monthly_climate(df: pd.DataFrame) -> List[MonthlyClimate]:
         else:
             root_wet = 0.25
 
+        # Mean relative humidity
+        if "RH2M" in m_data.columns:
+            yearly_rh = m_data.groupby("year")["RH2M"].mean()
+            humidity = round(float(yearly_rh.mean()), 1)
+        else:
+            humidity = 0.0
+
         monthly_results.append(
             MonthlyClimate(
                 month=m,
@@ -319,6 +326,7 @@ def calculate_monthly_climate(df: pd.DataFrame) -> List[MonthlyClimate]:
                 rain_p50=rain_p50,
                 rain_p80=rain_p80,
                 tmax=tmax,
+                humidity=humidity,
                 regional_root_zone_wetness=root_wet,
             )
         )

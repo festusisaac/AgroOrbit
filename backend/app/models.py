@@ -69,6 +69,7 @@ class MonthlyClimate(BaseModel):
     rain_p50: float
     rain_p80: float
     tmax: float
+    humidity: float = 0.0
     regional_root_zone_wetness: float
 
 

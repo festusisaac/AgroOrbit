@@ -55,68 +55,81 @@ export default function MapPicker({ lat, lon, onPick }) {
   onPickRef.current = onPick
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return
+    let map = null
+    let marker = null
+    let cancelled = false
+    let raf = 0
 
-    const hasPoint = typeof lat === 'number' && typeof lon === 'number'
-    let map
-    try {
-      map = new maplibregl.Map({
-        container: containerRef.current,
-        style: MAP_STYLE,
-        center: hasPoint ? [lon, lat] : NIGERIA_CENTER,
-        zoom: hasPoint ? 13 : 6,
-        pitch: 0,
-        bearing: 0,
-        maxPitch: 85,
-        attributionControl: { compact: true },
-      })
+    const init = () => {
+      if (cancelled || !containerRef.current || mapRef.current) return
 
-      map.addControl(
-        new maplibregl.NavigationControl({ visualizePitch: true, showCompass: true }),
-        'top-right',
-      )
-      map.addControl(new maplibregl.GlobeControl(), 'top-right')
-      map.addControl(
-        new maplibregl.TerrainControl({ source: 'terrain', exaggeration: 1.2 }),
-        'top-right',
-      )
+      const hasPoint = typeof lat === 'number' && typeof lon === 'number'
+      try {
+        map = new maplibregl.Map({
+          container: containerRef.current,
+          style: MAP_STYLE,
+          center: hasPoint ? [lon, lat] : NIGERIA_CENTER,
+          zoom: hasPoint ? 13 : 6,
+          pitch: 0,
+          bearing: 0,
+          maxPitch: 85,
+          attributionControl: false,
+        })
 
-      const pin = document.createElement('div')
-      pin.className = 'map-pin'
-      pin.setAttribute('aria-hidden', 'true')
-      const marker = new maplibregl.Marker({ element: pin, anchor: 'center' })
-      if (hasPoint) {
-        marker.setLngLat([lon, lat]).addTo(map)
-        markerAddedRef.current = true
-      }
+        map.addControl(
+          new maplibregl.NavigationControl({ visualizePitch: true, showCompass: true }),
+          'top-right',
+        )
+        map.addControl(new maplibregl.GlobeControl(), 'top-right')
+        map.addControl(
+          new maplibregl.TerrainControl({ source: 'terrain', exaggeration: 1.2 }),
+          'top-right',
+        )
 
-      map.on('click', (event) => {
-        const nextLon = Number(event.lngLat.lng.toFixed(4))
-        const nextLat = Number(event.lngLat.lat.toFixed(4))
-        marker.setLngLat([nextLon, nextLat])
-        if (!markerAddedRef.current) {
-          marker.addTo(map)
+        const pin = document.createElement('div')
+        pin.className = 'map-pin'
+        pin.setAttribute('aria-hidden', 'true')
+        marker = new maplibregl.Marker({ element: pin, anchor: 'center' })
+        if (hasPoint) {
+          marker.setLngLat([lon, lat]).addTo(map)
           markerAddedRef.current = true
         }
-        onPickRef.current?.(nextLat, nextLon)
-      })
 
-      mapRef.current = map
-      markerRef.current = marker
-    } catch (err) {
-      setMapError(true)
-      try {
-        map?.remove()
-      } catch {
-        /* ignore */
+        map.on('click', (event) => {
+          const nextLon = Number(event.lngLat.lng.toFixed(4))
+          const nextLat = Number(event.lngLat.lat.toFixed(4))
+          marker.setLngLat([nextLon, nextLat])
+          if (!markerAddedRef.current) {
+            marker.addTo(map)
+            markerAddedRef.current = true
+          }
+          onPickRef.current?.(nextLat, nextLon)
+        })
+
+        mapRef.current = map
+        markerRef.current = marker
+      } catch (err) {
+        setMapError(true)
+        try {
+          map?.remove()
+        } catch {
+          /* ignore */
+        }
+        map = null
       }
-      return
     }
 
+    raf = requestAnimationFrame(init)
+
     return () => {
-      map.remove()
-      mapRef.current = null
-      markerRef.current = null
+      cancelled = true
+      cancelAnimationFrame(raf)
+      if (map) {
+        map.remove()
+        mapRef.current = null
+        markerRef.current = null
+        markerAddedRef.current = false
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
