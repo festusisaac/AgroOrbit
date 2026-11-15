@@ -7,6 +7,7 @@ import Footer from './components/Footer'
 import SetupPanel from './components/SetupPanel'
 import ResultsView from './components/ResultsView'
 import HowItWorks from './components/HowItWorks'
+import OnboardingModal from './components/OnboardingModal'
 import GlassWeather from './components/GlassWeather'
 import { api, mockApi, hasBackend } from './api/client'
 import { CROPS, LOCATIONS } from './api/mockData'
@@ -63,6 +64,13 @@ export default function App() {
   const [weather, setWeather] = useState(null)
   const [weatherStatus, setWeatherStatus] = useState('loading')
   const [howOpen, setHowOpen] = useState(false)
+  const [onboardingOpen, setOnboardingOpen] = useState(() => {
+    try {
+      return !sessionStorage.getItem('agroorbit_onboarded_dismissed')
+    } catch {
+      return true
+    }
+  })
   const [setupOpen, setSetupOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('top')
 
@@ -254,6 +262,7 @@ export default function App() {
           location={location}
           mode={usingDemo ? 'demo' : 'live'}
           onHowItWorks={() => setHowOpen(true)}
+          onOpenOnboarding={() => setOnboardingOpen(true)}
           onHome={handleHome}
         />
 
@@ -332,13 +341,13 @@ export default function App() {
                 <div className="onboarding-summary">
                   <div className="onboarding-summary__chips">
                     <span className="summary-chip" title="Current 3-year rotation">
-                      🌱 <b>Current:</b> {form.current_rotation.join(' → ')}
+                       <b>Current:</b> {form.current_rotation.join(' → ')}
                     </span>
                     <span className="summary-chip" title="Soil condition">
-                      🪨 <b>Soil:</b> {form.soil.texture} ({form.soil.water_source.replace('_', '-')})
+                       <b>Soil:</b> {form.soil.texture} ({form.soil.water_source.replace('_', '-')})
                     </span>
                     <span className="summary-chip" title="Top priorities">
-                      ⚖️ <b>Priorities:</b> Water ({form.priorities.water_saving}), Soil ({form.priorities.soil_health})
+                       <b>Priorities:</b> Water ({form.priorities.water_saving}), Soil ({form.priorities.soil_health})
                     </span>
                   </div>
                   <button
@@ -424,6 +433,30 @@ export default function App() {
       </div>
 
       <HowItWorks open={howOpen} onClose={() => setHowOpen(false)} />
+
+      <OnboardingModal
+        open={onboardingOpen}
+        onClose={() => {
+          try {
+            sessionStorage.setItem('agroorbit_onboarded_dismissed', '1')
+          } catch {}
+          setOnboardingOpen(false)
+        }}
+        countryId={countryId}
+        regionId={regionId}
+        onCountryChange={handleCountry}
+        onRegionChange={handleRegion}
+        form={form}
+        setForm={setForm}
+        crops={crops}
+        onApply={() => {
+          try {
+            sessionStorage.setItem('agroorbit_onboarded_dismissed', '1')
+          } catch {}
+          setOnboardingOpen(false)
+          runComparison()
+        }}
+      />
     </div>
   )
 }

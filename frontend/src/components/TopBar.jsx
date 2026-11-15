@@ -1,7 +1,7 @@
 import { HelpCircle, MapPin } from 'lucide-react'
 import BrandMark from './BrandMark'
 
-export default function TopBar({ location, mode, onHowItWorks, onHome }) {
+export default function TopBar({ location, mode, onHowItWorks, onOpenOnboarding, onHome }) {
   const live = mode === 'live'
   return (
     <header className="topbar">
@@ -29,6 +29,15 @@ export default function TopBar({ location, mode, onHowItWorks, onHome }) {
         </span>
 
         <div className="topbar__actions">
+          <button
+            type="button"
+            className="linkbtn"
+            onClick={onOpenOnboarding}
+            title="Edit farm profile & onboarding setup"
+            style={{ fontWeight: 600, color: 'var(--green-700)' }}
+          >
+            <span>🌱 Farm Setup</span>
+          </button>
           <button type="button" className="linkbtn" onClick={onHowItWorks}>
             <HelpCircle className="icon" aria-hidden="true" />
             <span>How it works</span>
