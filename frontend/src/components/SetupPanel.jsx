@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import {
   Check,
   Droplets,
@@ -12,7 +12,16 @@ import {
   Store,
   Wheat,
 } from 'lucide-react'
-import MapPicker from './MapPicker'
+import CropGlyph from './CropGlyph'
+
+const MapPicker = lazy(() => import('./MapPicker'))
+
+const ZONE_SHORT = {
+  'Northern Guinea Savanna': 'N. Guinea Savanna',
+  'Southern Guinea Savanna': 'S. Guinea Savanna',
+}
+
+const shortZone = (zone) => ZONE_SHORT[zone] || zone
 
 const SOIL_OPTIONS = {
   texture: [
@@ -166,13 +175,23 @@ function FieldSection({ locations, value, onChange }) {
               </span>
               <span className="preset__text">
                 <span className="preset__name">{loc.name}</span>
-                <span className="preset__zone">{loc.zone}</span>
+                <span className="preset__zone">{shortZone(loc.zone)}</span>
               </span>
             </button>
           ))}
         </div>
 
-        <MapPicker lat={value?.lat} lon={value?.lon} onPick={pickMap} />
+        <Suspense
+          fallback={
+            <div className="map-frame">
+              <div className="map map--gl map--loading" aria-hidden="true">
+                <span>Loading map…</span>
+              </div>
+            </div>
+          }
+        >
+          <MapPicker lat={value?.lat} lon={value?.lon} onPick={pickMap} />
+        </Suspense>
 
         <div className="field-readout" aria-live="polite">
           {value ? (
@@ -255,6 +274,8 @@ function FieldSection({ locations, value, onChange }) {
   )
 }
 
+const CROP_SHORT = { pearl_millet: 'Millet' }
+
 function RotationSection({ form, setForm, crops }) {
   const setYear = (index, cropId) =>
     setForm((prev) => {
@@ -271,28 +292,34 @@ function RotationSection({ form, setForm, crops }) {
         </span>
         <div>
           <h2>Current rotation</h2>
-          <p>One crop per year.</p>
+          <p>Tap a crop for each year.</p>
         </div>
       </div>
       <div className="setup-card__body">
-        <div className="rotation-row">
+        <div className="year-pickers">
           {[0, 1, 2].map((index) => (
-            <div className="year-select" key={index}>
-              <label className="label" htmlFor={`year-${index}`}>
-                Year {index + 1}
-              </label>
-              <select
-                id={`year-${index}`}
-                className="select"
-                value={form.current_rotation[index] || 'maize'}
-                onChange={(e) => setYear(index, e.target.value)}
-              >
-                {crops.map((crop) => (
-                  <option key={crop.id} value={crop.id}>
-                    {crop.name}
-                  </option>
-                ))}
-              </select>
+            <div className="year-pick" key={index}>
+              <span className="year-pick__label">Year {index + 1}</span>
+              <div className="year-pick__choices">
+                {crops.map((crop) => {
+                  const selected = (form.current_rotation[index] || 'maize') === crop.id
+                  return (
+                    <button
+                      key={crop.id}
+                      type="button"
+                      className="crop-choice"
+                      data-selected={selected}
+                      aria-pressed={selected}
+                      aria-label={`Year ${index + 1}: ${crop.name}`}
+                      title={crop.name}
+                      onClick={() => setYear(index, crop.id)}
+                    >
+                      <CropGlyph id={crop.id} />
+                      <span>{CROP_SHORT[crop.id] || crop.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           ))}
         </div>
@@ -312,6 +339,10 @@ function RotationSection({ form, setForm, crops }) {
   )
 }
 
+const PRIORITY_STEPS = [1, 3, 5]
+const PRIORITY_WORDS = ['A little', 'Some', 'A lot']
+const stepOf = (value) => (value >= 4 ? 5 : value >= 2 ? 3 : value > 0 ? 1 : 0)
+
 function PrioritiesSection({ form, setForm }) {
   const setPriority = (key, value) =>
     setForm((prev) => ({ ...prev, priorities: { ...prev.priorities, [key]: value } }))
@@ -324,7 +355,7 @@ function PrioritiesSection({ form, setForm }) {
         </span>
         <div>
           <h2>What matters</h2>
-          <p>0 low · 5 high</p>
+          <p>Tap how much each one matters</p>
         </div>
         <SlidersHorizontal className="icon" style={{ marginLeft: 'auto', width: 16, height: 16 }} aria-hidden="true" />
       </div>
@@ -332,24 +363,30 @@ function PrioritiesSection({ form, setForm }) {
         <div className="priority-grid">
           {PRIORITIES.map(({ key, name, icon: Icon }) => {
             const value = Number(form.priorities[key] ?? 0)
+            const current = stepOf(value)
             return (
-              <div className="priority-row" key={key}>
+              <div className="priority-row" key={key} data-on={current > 0}>
                 <div className="priority-row__top">
                   <Icon className="icon" aria-hidden="true" />
                   <span>{name}</span>
-                  <b>{value}</b>
                 </div>
-                <input
-                  className="range"
-                  type="range"
-                  min="0"
-                  max="5"
-                  step="1"
-                  value={value}
-                  aria-label={name}
-                  style={{ '--fill': `${(value / 5) * 100}%` }}
-                  onChange={(e) => setPriority(key, Number(e.target.value))}
-                />
+                <div className="priority-scale" role="group" aria-label={`${name} importance`}>
+                  {PRIORITY_STEPS.map((step, level) => (
+                    <button
+                      key={step}
+                      type="button"
+                      className="priority-pip"
+                      data-active={current === step}
+                      aria-pressed={current === step}
+                      aria-label={`${name}: ${PRIORITY_WORDS[level]}`}
+                      onClick={() => setPriority(key, step)}
+                    >
+                      {[0, 1, 2].map((n) => (
+                        <i key={n} data-on={n <= level} />
+                      ))}
+                    </button>
+                  ))}
+                </div>
               </div>
             )
           })}

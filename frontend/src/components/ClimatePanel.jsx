@@ -51,6 +51,33 @@ export default function ClimatePanel({ climate, status, location: field }) {
   const dataset = datasets[0] || {}
   const threshold = heat_stress_days.threshold_c ?? 35
 
+  const rain = Number(season_rain_total.median_mm) || 0
+  const seasonLen = Number(season.length_days_median) || 0
+  const heat = Number(heat_stress_days.median) || 0
+  const dry = Number(dry_spells.avg_per_season) || 0
+  const verdicts = [
+    {
+      icon: CloudRain,
+      label: rain >= 700 ? 'Plenty of rain' : rain >= 400 ? 'Some rain' : 'Little rain',
+      tone: rain >= 400 ? 'good' : rain >= 250 ? 'warn' : 'bad',
+    },
+    {
+      icon: CloudSun,
+      label: seasonLen >= 150 ? 'Long season' : seasonLen >= 110 ? 'Normal season' : 'Short season',
+      tone: seasonLen >= 110 ? 'good' : 'warn',
+    },
+    {
+      icon: ThermometerSun,
+      label: heat >= 40 ? 'Very hot days' : heat >= 15 ? 'Some hot days' : 'Cool enough',
+      tone: heat >= 40 ? 'bad' : heat >= 15 ? 'warn' : 'good',
+    },
+    {
+      icon: Wind,
+      label: dry >= 3 ? 'Dry breaks' : dry >= 2 ? 'Some dry breaks' : 'Steady rain',
+      tone: dry >= 3 ? 'warn' : 'good',
+    },
+  ]
+
   return (
     <section className="climate" id="climate">
       <div className="climate__head">
@@ -66,6 +93,15 @@ export default function ClimatePanel({ climate, status, location: field }) {
       </div>
 
       <div className="climate__body">
+        <div className="climate-verdict" aria-label="Season summary">
+          {verdicts.map(({ icon: Icon, label, tone }) => (
+            <span className="climate-verdict__chip" data-tone={tone} key={label}>
+              <Icon className="icon" aria-hidden="true" />
+              {label}
+            </span>
+          ))}
+        </div>
+
         <div className="climate__stats">
           <div className="climate-stat">
             <span className="climate-stat__icon"><CloudSun className="icon" aria-hidden="true" /></span>

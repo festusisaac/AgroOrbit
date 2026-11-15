@@ -33,7 +33,7 @@ const MAP_STYLE = {
     terrain: {
       type: 'raster-dem',
       url: TERRAIN,
-      tileSize: 256,
+      maxzoom: 12,
       attribution: 'Terrain © Mapterhorn',
     },
   },
@@ -41,12 +41,6 @@ const MAP_STYLE = {
   sky: {},
   layers: [
     { id: 'satellite', type: 'raster', source: 'satellite' },
-    {
-      id: 'hillshade',
-      type: 'hillshade',
-      source: 'terrain',
-      paint: { 'hillshade-shadow-color': '#3b2f1e', 'hillshade-exaggeration': 0.35 },
-    },
     { id: 'labels', type: 'raster', source: 'labels', paint: { 'raster-opacity': 0.92 } },
   ],
 }

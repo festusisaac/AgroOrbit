@@ -1,15 +1,36 @@
 import { Fragment, useState } from 'react'
-import { ArrowRight, ChevronDown, Trophy, UserCheck } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  Bug,
+  CheckCircle2,
+  ChevronDown,
+  Droplets,
+  Store,
+  Sun,
+  ThumbsUp,
+  Trophy,
+  UserCheck,
+} from 'lucide-react'
 import CropGlyph from './CropGlyph'
 import RadarScore from './RadarScore'
 
-const FIT_LABEL = {
-  strong: 'Strong fit',
-  moderate: 'Moderate fit',
-  weak: 'Weak fit',
+const FIT = {
+  strong: { label: 'Very good', icon: CheckCircle2 },
+  moderate: { label: 'Good', icon: ThumbsUp },
+  weak: { label: 'Fair', icon: AlertTriangle },
 }
 
+const RATINGS = [
+  ['water_fit', 'Water', Droplets],
+  ['heat_drought_resilience', 'Heat & dry', Sun],
+  ['pest_break', 'Pests', Bug],
+  ['market_preference_fit', 'Market', Store],
+]
+
 const LEVEL_BARS = { high: 3, medium: 2, low: 1 }
+
+const scoreTone = (value) => (value >= 70 ? 'strong' : value >= 45 ? 'moderate' : 'weak')
 
 const pretty = (text = '') =>
   text
@@ -17,6 +38,25 @@ const pretty = (text = '') =>
     .replace(/\b(maize|cowpea|sorghum|groundnut|pearl millet|soybean)\b/gi, (word) =>
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
     )
+
+function Rating({ icon: Icon, label, value }) {
+  const pct = Math.max(0, Math.min(100, Number(value) || 0))
+  const steps = Math.max(1, Math.round((pct / 100) * 3))
+  const tone = scoreTone(pct)
+  return (
+    <div className="rate-row" data-tone={tone}>
+      <span className="rate-row__icon" aria-hidden="true">
+        <Icon className="icon" />
+      </span>
+      <span className="rate-row__label">{label}</span>
+      <span className="rate-bars" aria-label={`${label}: ${steps} of 3`}>
+        {[1, 2, 3].map((i) => (
+          <i key={i} data-on={i <= steps} />
+        ))}
+      </span>
+    </div>
+  )
+}
 
 function Level({ label, level = 'low' }) {
   const filled = LEVEL_BARS[level] || 1
@@ -52,14 +92,20 @@ export default function StrategyCard({ rotation, cropMap, isTop, delta }) {
     review_recommended_by = [],
   } = rotation
 
+  const fit = FIT[fit_category] || FIT.weak
+  const FitIcon = fit.icon
+
   return (
     <article className={`strategy ${isTop ? 'strategy--top' : ''}`}>
       <div className="strategy__top">
         <span className={`strategy__rank ${isTop ? 'strategy__rank--top' : ''}`}>
           {isTop ? <Trophy className="icon" aria-hidden="true" /> : null}
-          {isTop ? '#1 Recommended' : `Option ${rank}`}
+          {isTop ? 'Best choice' : `Option ${rank}`}
         </span>
-        <span className={`fit-pill fit-pill--${fit_category}`}>{FIT_LABEL[fit_category] || fit_category}</span>
+        <span className={`fit-pill fit-pill--${fit_category}`}>
+          <FitIcon className="icon" aria-hidden="true" />
+          {fit.label}
+        </span>
       </div>
 
       <div className="strategy__head">
@@ -76,8 +122,8 @@ export default function StrategyCard({ rotation, cropMap, isTop, delta }) {
 
       {typeof delta === 'number' && delta !== 0 ? (
         <span className={`delta ${delta > 0 ? 'delta--up' : 'delta--down'}`}>
-          {delta > 0 ? '+' : ''}
-          {Math.round(delta)} vs current
+          {delta > 0 ? <span aria-hidden="true">▲</span> : <span aria-hidden="true">▼</span>}
+          {delta > 0 ? 'Better than what you grow now' : 'Below what you grow now'}
         </span>
       ) : null}
 
@@ -97,13 +143,10 @@ export default function StrategyCard({ rotation, cropMap, isTop, delta }) {
         })}
       </div>
 
-      <RadarScore criteria={criteria} tone={fit_category} />
-
-      <p className="strategy__why">{why_suggested}</p>
-
-      <div className="strategy__levels">
-        <Level label="Data" level={data_confidence.level} />
-        <Level label="Knowledge" level={knowledge_support.level} />
+      <div className="rating-list">
+        {RATINGS.map(([key, name, Icon]) => (
+          <Rating key={key} icon={Icon} label={name} value={criteria[key]} />
+        ))}
       </div>
 
       <button
@@ -112,12 +155,22 @@ export default function StrategyCard({ rotation, cropMap, isTop, delta }) {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? 'Hide details' : 'Why this rotation?'}
+        {open ? 'Hide' : 'Why this one?'}
         <ChevronDown className="icon" aria-hidden="true" />
       </button>
 
       {open ? (
         <div className="strategy__details">
+          {why_suggested ? <p className="strategy__why">{why_suggested}</p> : null}
+
+          <div className="strategy__profile">
+            <RadarScore criteria={criteria} tone={fit_category} />
+            <div className="strategy__levels">
+              <Level label="Data" level={data_confidence.level} />
+              <Level label="Knowledge" level={knowledge_support.level} />
+            </div>
+          </div>
+
           {evidence.length ? (
             <div className="ev-list">
               {evidence.map((item, index) => (
