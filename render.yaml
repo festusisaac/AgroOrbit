@@ -12,3 +12,17 @@ services:
         value: 3.11.9
       - key: CORS_ORIGINS
         value: "*"
+
+  - type: web
+    name: agroorbit-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://agroorbit-backend.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
