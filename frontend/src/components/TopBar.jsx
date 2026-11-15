@@ -1,4 +1,4 @@
-import { HelpCircle, MapPin } from 'lucide-react'
+import { HelpCircle, MapPin, Sprout } from 'lucide-react'
 import BrandMark from './BrandMark'
 
 export default function TopBar({ location, mode, onHowItWorks, onOpenOnboarding, onHome }) {
@@ -34,9 +34,10 @@ export default function TopBar({ location, mode, onHowItWorks, onOpenOnboarding,
             className="linkbtn"
             onClick={onOpenOnboarding}
             title="Edit farm profile & onboarding setup"
-            style={{ fontWeight: 600, color: 'var(--green-700)' }}
+            style={{ fontWeight: 600, color: 'var(--green-700)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
           >
-            <span>🌱 Farm Setup</span>
+            <Sprout className="icon" aria-hidden="true" />
+            <span>Farm Setup</span>
           </button>
           <button type="button" className="linkbtn" onClick={onHowItWorks}>
             <HelpCircle className="icon" aria-hidden="true" />

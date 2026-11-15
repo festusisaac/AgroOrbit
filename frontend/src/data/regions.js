@@ -2,7 +2,7 @@ export const COUNTRIES = [
   {
     id: 'nigeria',
     name: 'Nigeria',
-    flag: '🇳🇬',
+    code: 'NG',
     regions: [
       { id: 'kano', name: 'Kano', zone: 'Sudan Savanna', lat: 12.0022, lon: 8.5919 },
       { id: 'kaduna', name: 'Kaduna', zone: 'Guinea Savanna', lat: 10.5222, lon: 7.4383 },
@@ -15,7 +15,7 @@ export const COUNTRIES = [
   {
     id: 'ghana',
     name: 'Ghana',
-    flag: '🇬🇭',
+    code: 'GH',
     regions: [
       { id: 'tamale', name: 'Tamale', zone: 'Northern Savanna', lat: 9.4008, lon: -0.8393 },
       { id: 'kumasi', name: 'Kumasi', zone: 'Forest belt', lat: 6.6885, lon: -1.6244 },
@@ -25,7 +25,7 @@ export const COUNTRIES = [
   {
     id: 'kenya',
     name: 'Kenya',
-    flag: '🇰🇪',
+    code: 'KE',
     regions: [
       { id: 'nairobi', name: 'Nairobi', zone: 'Central highlands', lat: -1.2921, lon: 36.8219 },
       { id: 'nakuru', name: 'Nakuru', zone: 'Rift Valley', lat: -0.3031, lon: 36.08 },
@@ -36,7 +36,7 @@ export const COUNTRIES = [
   {
     id: 'india',
     name: 'India',
-    flag: '🇮🇳',
+    code: 'IN',
     regions: [
       { id: 'ludhiana', name: 'Ludhiana', zone: 'Punjab', lat: 30.901, lon: 75.8573 },
       { id: 'nagpur', name: 'Nagpur', zone: 'Deccan', lat: 21.1458, lon: 79.0882 },
@@ -46,7 +46,7 @@ export const COUNTRIES = [
   {
     id: 'brazil',
     name: 'Brazil',
-    flag: '🇧🇷',
+    code: 'BR',
     regions: [
       { id: 'sorriso', name: 'Sorriso', zone: 'Mato Grosso', lat: -12.5453, lon: -55.7113 },
       { id: 'barreiras', name: 'Barreiras', zone: 'Bahia', lat: -12.1528, lon: -44.99 },
@@ -56,7 +56,7 @@ export const COUNTRIES = [
   {
     id: 'usa',
     name: 'United States',
-    flag: '🇺🇸',
+    code: 'US',
     regions: [
       { id: 'iowa', name: 'Iowa', zone: 'Corn Belt', lat: 42.0, lon: -93.5 },
       { id: 'kansas', name: 'Kansas', zone: 'Great Plains', lat: 38.5, lon: -98.0 },

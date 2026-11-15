@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronDown, Loader2, Sparkles } from 'lucide-react'
+import { ChevronDown, Layers, Loader2, SlidersHorizontal, Sparkles, Sprout } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import MobileNav from './components/MobileNav'
 import TopBar from './components/TopBar'
@@ -304,7 +304,7 @@ export default function App() {
                     <select value={countryId} onChange={(e) => handleCountry(e.target.value)}>
                       {COUNTRIES.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.flag} {c.name}
+                          {c.name}
                         </option>
                       ))}
                     </select>
@@ -341,13 +341,16 @@ export default function App() {
                 <div className="onboarding-summary">
                   <div className="onboarding-summary__chips">
                     <span className="summary-chip" title="Current 3-year rotation">
-                       <b>Current:</b> {form.current_rotation.join(' → ')}
+                      <Sprout className="icon icon--xs" aria-hidden="true" />
+                      <b>Current:</b> {form.current_rotation.join(' → ')}
                     </span>
                     <span className="summary-chip" title="Soil condition">
-                       <b>Soil:</b> {form.soil.texture} ({form.soil.water_source.replace('_', '-')})
+                      <Layers className="icon icon--xs" aria-hidden="true" />
+                      <b>Soil:</b> {form.soil.texture} ({form.soil.water_source.replace('_', '-')})
                     </span>
                     <span className="summary-chip" title="Top priorities">
-                       <b>Priorities:</b> Water ({form.priorities.water_saving}), Soil ({form.priorities.soil_health})
+                      <SlidersHorizontal className="icon icon--xs" aria-hidden="true" />
+                      <b>Priorities:</b> Water ({form.priorities.water_saving}), Soil ({form.priorities.soil_health})
                     </span>
                   </div>
                   <button

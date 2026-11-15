@@ -9,6 +9,8 @@ import {
   Store,
   Sun,
   ThumbsUp,
+  TrendingDown,
+  TrendingUp,
   Trophy,
   UserCheck,
 } from 'lucide-react'
@@ -122,7 +124,11 @@ export default function StrategyCard({ rotation, cropMap, isTop, delta }) {
 
       {typeof delta === 'number' && delta !== 0 ? (
         <span className={`delta ${delta > 0 ? 'delta--up' : 'delta--down'}`}>
-          {delta > 0 ? <span aria-hidden="true">▲</span> : <span aria-hidden="true">▼</span>}
+          {delta > 0 ? (
+            <TrendingUp className="icon delta-icon" aria-hidden="true" />
+          ) : (
+            <TrendingDown className="icon delta-icon" aria-hidden="true" />
+          )}
           {delta > 0 ? 'Better than what you grow now' : 'Below what you grow now'}
         </span>
       ) : null}

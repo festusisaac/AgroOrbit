@@ -92,7 +92,7 @@ export default function OnboardingModal({
       <div className="modal__head onboarding__head">
         <div className="onboarding__brand">
           <span className="onboarding__icon" aria-hidden="true">
-            🌱
+            <Sprout className="icon onboarding__icon-svg" />
           </span>
           <div>
             <h2>Welcome to AgroOrbit</h2>
@@ -123,7 +123,7 @@ export default function OnboardingModal({
               <select value={countryId} onChange={(e) => onCountryChange(e.target.value)}>
                 {COUNTRIES.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.flag} {c.name}
+                    {c.name}
                   </option>
                 ))}
               </select>

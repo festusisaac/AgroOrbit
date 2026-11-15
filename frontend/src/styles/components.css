@@ -2428,6 +2428,23 @@
 .summary-chip b {
   color: var(--ink);
 }
+.summary-chip .icon {
+  width: 13px;
+  height: 13px;
+  color: var(--green-700);
+  flex-shrink: 0;
+}
+.delta-icon {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.5;
+  display: inline-block;
+}
+.onboarding__icon-svg {
+  width: 28px;
+  height: 28px;
+  color: var(--green-700);
+}
 .setup-toggle {
   align-self: flex-start;
   display: inline-flex;
