@@ -2399,12 +2399,41 @@
   font-size: 0.62rem;
   color: var(--ink-3);
 }
+.onboarding-summary {
+  margin-top: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: var(--surface-2, rgba(255, 255, 255, 0.7));
+  border: 1px solid var(--line-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.onboarding-summary__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+.summary-chip b {
+  color: var(--ink);
+}
 .setup-toggle {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  margin-top: 0.9rem;
+  margin-top: 0.2rem;
   padding: 0.2rem 0;
   border: none;
   background: none;

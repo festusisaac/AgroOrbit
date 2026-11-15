@@ -84,7 +84,7 @@ export default function App() {
       })
       .catch(() => {
         if (!active) return
-        setUsingDemo(true)
+        if (!hasBackend) setUsingDemo(true)
         setLocations(LOCATIONS)
         setCrops(CROPS)
       })
@@ -178,9 +178,11 @@ export default function App() {
   )
 
   useEffect(() => {
-    if (status !== 'ready' || !location) return
+    if (!location) return
     if (inputKeyOf(location, form) === lastKeyRef.current) return
-    const timer = window.setTimeout(() => runComparison({ quiet: true }), 650)
+    const timer = window.setTimeout(() => {
+      runComparison({ quiet: status === 'ready' })
+    }, 400)
     return () => window.clearTimeout(timer)
   }, [location, form, status, runComparison])
 
@@ -321,21 +323,34 @@ export default function App() {
                   ) : (
                     <Sparkles className="icon" aria-hidden="true" />
                   )}
-                  {busy ? 'Reading the climate…' : 'Compare rotations'}
+                  {busy ? 'Reading NASA climate…' : status === 'ready' ? 'Refresh comparison' : 'Compare rotations'}
                 </button>
                 <p className="explore__hint">
-                  {usingDemo ? 'Demo data' : 'Live NASA data'} · works worldwide
+                  {usingDemo ? 'Demo data' : 'Live NASA data'} · updates automatically on selection
                 </p>
 
-                <button
-                  type="button"
-                  className="setup-toggle"
-                  aria-expanded={setupOpen}
-                  onClick={() => setSetupOpen((v) => !v)}
-                >
-                  {setupOpen ? 'Hide advanced setup' : 'Advanced setup · optional'}
-                  <ChevronDown className={`icon ${setupOpen ? 'is-open' : ''}`} aria-hidden="true" />
-                </button>
+                <div className="onboarding-summary">
+                  <div className="onboarding-summary__chips">
+                    <span className="summary-chip" title="Current 3-year rotation">
+                      🌱 <b>Current:</b> {form.current_rotation.join(' → ')}
+                    </span>
+                    <span className="summary-chip" title="Soil condition">
+                      🪨 <b>Soil:</b> {form.soil.texture} ({form.soil.water_source.replace('_', '-')})
+                    </span>
+                    <span className="summary-chip" title="Top priorities">
+                      ⚖️ <b>Priorities:</b> Water ({form.priorities.water_saving}), Soil ({form.priorities.soil_health})
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="setup-toggle"
+                    aria-expanded={setupOpen}
+                    onClick={() => setSetupOpen((v) => !v)}
+                  >
+                    {setupOpen ? 'Hide farm setup' : 'Edit farm profile & priorities'}
+                    <ChevronDown className={`icon ${setupOpen ? 'is-open' : ''}`} aria-hidden="true" />
+                  </button>
+                </div>
 
                 {setupOpen ? (
                   <div className="explore__setup">
