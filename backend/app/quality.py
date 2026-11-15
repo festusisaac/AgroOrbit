@@ -7,7 +7,7 @@ Strictly adheres to Section 8.3 of AGROORBIT_PLAN_v2.md:
 """
 
 from typing import Any, Dict, List, Optional, Tuple
-from app.config import SCORE_SIMILARITY_THRESHOLD
+from app.config import SCORE_SIMILARITY_THRESHOLD, is_in_supported_region
 from app.models import Confidence, SoilInput
 
 
@@ -15,15 +15,24 @@ def evaluate_data_confidence(
     missing_pct: float,
     quality_flags: List[str],
     soil: Optional[SoilInput] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
 ) -> Confidence:
-    """Evaluates data confidence based on NASA record quality and farmer soil inputs."""
+    """Evaluates data confidence based on NASA record quality, farmer soil inputs, and geographic region."""
     reasons: List[str] = []
     confidence_points = 100
 
     # 1. Spatial resolution honesty (always present per Section 6.1)
     reasons.append("NASA POWER meteorology is a coarse global grid (~27 km), not a field-level sensor")
 
-    # 2. Soil inputs evaluation
+    # 2. Geographic coverage check (Scope Section 1)
+    if lat is not None and lon is not None and not is_in_supported_region(lat, lon):
+        confidence_points -= 35
+        reasons.append(
+            f"Field location ({lat:.2f}, {lon:.2f}) falls outside the validated northern savanna and Middle Belt knowledge base region"
+        )
+
+    # 3. Soil inputs evaluation
     if soil:
         unknown_inputs = []
         if soil.texture == "unknown":
@@ -64,9 +73,17 @@ def evaluate_data_confidence(
 def evaluate_knowledge_support(
     crops: List[Any],
     priority_weights: Optional[Dict[str, float]] = None,
+    unknown_crops: Optional[List[str]] = None,
 ) -> Confidence:
-    """Evaluates knowledge support confidence based on the proportion of verified traits."""
+    """Evaluates knowledge support confidence based on verified traits and unassessed crops."""
     reasons: List[str] = []
+
+    # If any crop in sequence is outside knowledge base, lower knowledge support to low
+    if unknown_crops:
+        reasons.append(
+            f"Sequence contains unassessed crop(s) ({', '.join(unknown_crops)}) outside the regional savanna knowledge base; agronomic support is low"
+        )
+        return Confidence(level="low", reasons=reasons)
 
     if not crops:
         return Confidence(level="low", reasons=["No crops evaluated in sequence"])

@@ -6,7 +6,7 @@ historical NASA climate indicators, and crop-rotation recommendations.
 
 import logging
 from typing import List, Optional
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.climate import compute_climate_summary
@@ -72,13 +72,18 @@ def get_crops() -> List[CropItem]:
 
 @app.get("/climate", response_model=ClimateResponse)
 def get_climate(
-    lat: float = Query(..., description="Latitude of the field point"),
-    lon: float = Query(..., description="Longitude of the field point"),
+    lat: float = Query(..., ge=-90.0, le=90.0, description="Latitude of the field point between -90 and 90"),
+    lon: float = Query(..., ge=-180.0, le=180.0, description="Longitude of the field point between -180 and 180"),
 ) -> ClimateResponse:
     """Return real NASA climate indicators for the specified point.
 
     Falls back to mock data only when both NASA POWER API and local cache fail.
     """
+    if not (-90.0 <= lat <= 90.0):
+        raise HTTPException(status_code=400, detail=f"Latitude must be between -90 and 90 degrees, got {lat}.")
+    if not (-180.0 <= lon <= 180.0):
+        raise HTTPException(status_code=400, detail=f"Longitude must be between -180 and 180 degrees, got {lon}.")
+
     preset_label = find_preset_location_label(lat, lon)
     label = preset_label or f"Coordinates ({lat:.2f}, {lon:.2f})"
 

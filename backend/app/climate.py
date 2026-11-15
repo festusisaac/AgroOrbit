@@ -556,8 +556,7 @@ def get_crop_agronomic_requirements(crop: Any) -> Tuple[str, str, int, float, fl
         from app.knowledge import load_crops
         crops_dict = load_crops()
         if crop not in crops_dict:
-            # Graceful fallback for unknown crop IDs per Section 12
-            return crop, crop.capitalize(), 90, 450.0, HEAT_STRESS_THRESHOLD_C
+            raise ValueError(f"Crop '{crop}' is not in the regional savanna knowledge base.")
         crop = crops_dict[crop]
 
     crop_id = crop.id if hasattr(crop, "id") else crop.get("id", "unknown")
@@ -692,9 +691,57 @@ def compute_crop_climate_indicators(
     """Computes multi-decadal historical climate fit metrics and frequencies for a crop.
 
     Strictly excludes flagged/incomplete years from frequencies.
+    Unknown crops are marked 'Not assessed' without invented fallback parameters.
     """
     if "PRECTOTCORR" not in df.columns:
         raise ValueError("DataFrame must contain 'PRECTOTCORR' column.")
+
+    from app.knowledge import load_crops
+    crops_dict = load_crops()
+    crop_id_check = crop if isinstance(crop, str) else getattr(crop, "id", None)
+    if crop_id_check and crop_id_check not in crops_dict:
+        # Mark unknown crop as Not Assessed per Section 12 - NO invented parameters
+        return CropClimateIndicators(
+            crop_id=crop_id_check,
+            crop_name=f"{crop_id_check.capitalize()} (Not Assessed)",
+            duration_days=0,
+            water_need_min_mm=0.0,
+            total_years_evaluated=0,
+            valid_years_count=0,
+            flagged_years_count=0,
+            can_complete_freq=CropFrequencyMetric(
+                success_years=0,
+                total_valid_years=0,
+                frequency_pct=0.0,
+                formatted="Not assessed",
+                flagged_years_excluded=0,
+            ),
+            water_ok_freq=CropFrequencyMetric(
+                success_years=0,
+                total_valid_years=0,
+                frequency_pct=0.0,
+                formatted="Not assessed",
+                flagged_years_excluded=0,
+            ),
+            critical_dry_spell_risk_freq=CropFrequencyMetric(
+                success_years=0,
+                total_valid_years=0,
+                frequency_pct=0.0,
+                formatted="Not assessed",
+                flagged_years_excluded=0,
+            ),
+            heat_stress_risk_freq=CropFrequencyMetric(
+                success_years=0,
+                total_valid_years=0,
+                frequency_pct=0.0,
+                formatted="Not assessed",
+                flagged_years_excluded=0,
+            ),
+            window_rain_median_mm=0.0,
+            window_rain_p20_mm=0.0,
+            heat_days_median=0,
+            yearly_indicators=[],
+        )
 
     rain = df["PRECTOTCORR"]
     t2m_max = df["T2M_MAX"] if "T2M_MAX" in df.columns else pd.Series(dtype=float)

@@ -550,14 +550,19 @@ def generate_recommendations(
     selected = select_and_rank_recommendations(scored_candidates, max_total=5)
 
     # 4. Evaluate confidences & outcome
+    unknown_crops = [c for c in payload.current_rotation if c.strip().lower() not in crops_dict]
+
     data_confidence = evaluate_data_confidence(
         missing_pct=missing_pct,
         quality_flags=quality_flags,
         soil=payload.soil,
+        lat=payload.lat,
+        lon=payload.lon,
     )
     knowledge_support = evaluate_knowledge_support(
         crops=list(crops_dict.values()),
         priority_weights=weights,
+        unknown_crops=unknown_crops if unknown_crops else None,
     )
     overall_outcome, outcome_message = determine_overall_outcome(
         ranked_rotations=selected,
@@ -582,6 +587,9 @@ def generate_recommendations(
             priorities=payload.priorities,
             soil=payload.soil,
             preferred_crops=payload.preferred_crops,
+            lat=payload.lat,
+            lon=payload.lon,
+            scenario=payload.scenario,
         )
         recommendations.append(rec)
 

@@ -127,3 +127,30 @@ CLIMATE_PERIOD: str = "1991-2025"
 DISCLAIMER_TEXT: str = (
     "AgroOrbit supports decisions. It does not replace local farmer knowledge or agricultural advisers."
 )
+
+# ============================================================================
+# Geographic Knowledge Base Boundaries (Section 1 Scope)
+# Northern Savanna & Middle Belt, Nigeria
+# ============================================================================
+REGION_LAT_MIN: float = 6.5
+REGION_LAT_MAX: float = 14.0
+REGION_LON_MIN: float = 2.5
+REGION_LON_MAX: float = 14.5
+
+
+def is_in_supported_region(lat: float, lon: float) -> bool:
+    """Checks whether coordinates fall within the validated knowledge base region
+
+    (Nigeria northern savanna & Middle Belt: 6.5°N - 14.0°N, 2.5°E - 14.5°E).
+    """
+    return (REGION_LAT_MIN <= lat <= REGION_LAT_MAX) and (REGION_LON_MIN <= lon <= REGION_LON_MAX)
+
+
+# ============================================================================
+# Soil Characteristic Allowed Values
+# ============================================================================
+ALLOWED_SOIL_TEXTURES = {"sandy", "loam", "clay", "unknown"}
+ALLOWED_SOIL_DRAINAGES = {"poor", "moderate", "well", "well_drained", "unknown"}
+ALLOWED_SOIL_ORGANIC_MATTERS = {"low", "medium", "high", "unknown"}
+ALLOWED_SOIL_WATER_SOURCES = {"rain_fed", "limited_irrigation", "irrigated", "unknown"}
+ALLOWED_SOIL_SLOPES = {"flat", "gentle", "steep", "unknown"}

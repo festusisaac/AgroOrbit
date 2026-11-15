@@ -290,6 +290,11 @@ class NasaPowerClient:
                         last_exception = NasaPowerApiError(
                             f"HTTP {resp.status_code}: {resp.text[:200]}"
                         )
+            except httpx.TimeoutException as e:
+                logger.warning(f"NASA POWER attempt {attempt + 1} timed out after {self.timeout}s: {e}")
+                last_exception = NasaPowerApiError(
+                    f"NASA POWER request timed out after {self.timeout}s for coordinates ({lat}, {lon})."
+                )
             except Exception as e:
                 logger.warning(f"NASA POWER attempt {attempt + 1} failed with exception: {e}")
                 last_exception = e
@@ -305,6 +310,7 @@ class NasaPowerClient:
             meta["from_cache"] = False
             meta["cache_key"] = cache_key
             meta["fetch_timestamp"] = datetime.now(timezone.utc).isoformat()
+            meta["quality_flags"].append("live_nasa_fetch")
             return df, meta
 
         # If live call failed, check if ANY cache is available as fallback

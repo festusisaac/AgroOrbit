@@ -16,6 +16,11 @@ from app.config import (
     ALGORITHM_VERSION,
     CLIMATE_PERIOD,
     HEAT_STRESS_THRESHOLD_C,
+    REGION_LAT_MAX,
+    REGION_LAT_MIN,
+    REGION_LON_MAX,
+    REGION_LON_MIN,
+    is_in_supported_region,
 )
 from app.models import (
     Confidence,
@@ -47,6 +52,7 @@ def generate_why_suggested(
     priorities: PrioritiesInput,
     crops_dict: Dict[str, Any],
     criteria: CriteriaScores,
+    scenario: Optional[Any] = None,
 ) -> str:
     """Generates plain-language explanation of why this rotation was suggested, tied to top priorities."""
     crop_names = [
@@ -54,11 +60,18 @@ def generate_why_suggested(
         for c in sequence
     ]
 
+    scenario_suffix = ""
+    if scenario:
+        rain_chg = getattr(scenario, "rainfall_change_pct", 0.0)
+        temp_chg = getattr(scenario, "temperature_change_c", 0.0)
+        if rain_chg != 0.0 or temp_chg != 0.0:
+            scenario_suffix = f" [Evaluated under hypothetical sensitivity scenario: Rain {rain_chg:+g}%, Temp {temp_chg:+g}°C; not a forecast.]"
+
     if is_existing:
         base = f"Baseline current rotation ({' → '.join(crop_names)}) evaluated to benchmark your existing practice against 35-year NASA climate indicators and diversified alternatives."
         if criteria.pest_break < 50.0:
             base += " Continuous cereal cropping shows high pest and nutrient depletion risks over multi-year cycles."
-        return base
+        return base + scenario_suffix
 
     # Identify farmer's top stated priorities
     priority_map = {
@@ -95,23 +108,23 @@ def generate_why_suggested(
         if has_legume and "soil health restoration" in priority_str:
             return (
                 f"Suggested because it directly advances your priority for {priority_str} by integrating "
-                f"nitrogen-fixing legumes to restore soil fertility while maintaining grain production."
+                f"nitrogen-fixing legumes to restore soil fertility while maintaining grain production.{scenario_suffix}"
             )
         elif has_drought_cereal and ("water saving" in priority_str or "climate resilience" in priority_str):
             return (
                 f"Suggested because it directly advances your priority for {priority_str}, pairing drought-hardy "
-                f"staple cereals with moisture-efficient break crops to buffer against seasonal dry spells."
+                f"staple cereals with moisture-efficient break crops to buffer against seasonal dry spells.{scenario_suffix}"
             )
         else:
             return (
                 f"Suggested because it provides strong multi-criteria alignment with your priorities for {priority_str}, "
-                f"balancing seasonal crop water fit, soil organic matter, and production stability."
+                f"balancing seasonal crop water fit, soil organic matter, and production stability.{scenario_suffix}"
             )
 
     # Neutral fallback when all priorities are low or zero
     return (
         f"Suggested as a balanced, agronomic 3-year sequence ({' → '.join(crop_names)}) providing diversified "
-        f"staple food security, biological soil replenishment, and pest break benefits."
+        f"staple food security, biological soil replenishment, and pest break benefits.{scenario_suffix}"
     )
 
 
@@ -121,6 +134,7 @@ def generate_evidence_items(
     crops_dict: Dict[str, Any],
     soil: Optional[SoilInput] = None,
     preferred_crops: Optional[List[str]] = None,
+    scenario: Optional[Any] = None,
 ) -> List[EvidenceItem]:
     """Generates empirical evidence items, strictly labelled by data source."""
     evidence: List[EvidenceItem] = []
@@ -130,6 +144,20 @@ def generate_evidence_items(
     # -----------------------------------------------------------------------
     # 1. Source: NASA POWER (Climate & Crop-window indicators)
     # -----------------------------------------------------------------------
+    # Scenario sensitivity notice if active
+    if scenario:
+        rain_chg = getattr(scenario, "rainfall_change_pct", 0.0)
+        temp_chg = getattr(scenario, "temperature_change_c", 0.0)
+        if rain_chg != 0.0 or temp_chg != 0.0:
+            evidence.append(
+                EvidenceItem(
+                    source="NASA POWER",
+                    metric="Climate sensitivity scenario",
+                    value=f"Rainfall: {rain_chg:+g}%, Temperature: {temp_chg:+g}°C",
+                    meaning="Hypothetical sensitivity test, not a forecast. Pipeline rerun on perturbed multi-decadal series per Section 8.5.",
+                )
+            )
+
     # Season completion
     completion_parts = []
     water_parts = []
@@ -139,12 +167,21 @@ def generate_evidence_items(
     for cid, ind in zip(sequence, seq_indicators):
         cname = ind.crop_name if ind else cid.capitalize()
         if ind and hasattr(ind, "can_complete_freq"):
-            completion_parts.append(f"{cname}: {ind.can_complete_freq.formatted} ({ind.can_complete_freq.frequency_pct:.0f}%)")
+            if ind.can_complete_freq.formatted == "Not assessed":
+                completion_parts.append(f"{cname}: Not assessed (crop outside knowledge base)")
+            else:
+                completion_parts.append(f"{cname}: {ind.can_complete_freq.formatted} ({ind.can_complete_freq.frequency_pct:.0f}%)")
         if ind and hasattr(ind, "water_ok_freq"):
-            water_parts.append(f"{cname}: {ind.water_ok_freq.formatted} ({ind.water_ok_freq.frequency_pct:.0f}%)")
+            if ind.water_ok_freq.formatted == "Not assessed":
+                water_parts.append(f"{cname}: Not assessed")
+            else:
+                water_parts.append(f"{cname}: {ind.water_ok_freq.formatted} ({ind.water_ok_freq.frequency_pct:.0f}%)")
         if ind and hasattr(ind, "critical_dry_spell_risk_freq"):
-            dry_spell_parts.append(f"{cname}: {ind.critical_dry_spell_risk_freq.formatted}")
-        if ind and hasattr(ind, "heat_days_median"):
+            if ind.critical_dry_spell_risk_freq.formatted == "Not assessed":
+                dry_spell_parts.append(f"{cname}: Not assessed")
+            else:
+                dry_spell_parts.append(f"{cname}: {ind.critical_dry_spell_risk_freq.formatted}")
+        if ind and hasattr(ind, "heat_days_median") and getattr(ind, "valid_years_count", 0) > 0:
             heat_days_list.append(ind.heat_days_median)
 
     if completion_parts:
@@ -158,6 +195,35 @@ def generate_evidence_items(
         )
 
     if water_parts:
+        evidence.append(
+            EvidenceItem(
+                source="NASA POWER",
+                metric="Crop-window rainfall sufficiency",
+                value="; ".join(water_parts),
+                meaning="Share of historical years where rainfall received during the crop growth window satisfied minimum crop water needs.",
+            )
+        )
+
+    if dry_spell_parts:
+        evidence.append(
+            EvidenceItem(
+                source="NASA POWER",
+                metric="Critical flowering dry-spell risk (>7 rainless days)",
+                value="; ".join(dry_spell_parts),
+                meaning="Frequency of damaging dry spells occurring during sensitive flowering and grain-filling growth stages (25%-60% of duration).",
+            )
+        )
+
+    if heat_days_list:
+        median_heat = sum(heat_days_list) // len(heat_days_list)
+        evidence.append(
+            EvidenceItem(
+                source="NASA POWER",
+                metric=f"Extreme heat stress days (Tmax > {HEAT_STRESS_THRESHOLD_C:.0f}°C)",
+                value=f"Median {median_heat} days per season across sequence",
+                meaning=f"Daily maximum temperatures exceeding {HEAT_STRESS_THRESHOLD_C:.0f}°C during active growth windows, which can impair pollen viability.",
+            )
+        )
         evidence.append(
             EvidenceItem(
                 source="NASA POWER",
@@ -339,6 +405,9 @@ def generate_benefits(
 
 def generate_assumptions(
     soil: Optional[SoilInput] = None,
+    scenario: Optional[Any] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
 ) -> List[str]:
     """Documents transparent modeling assumptions applied during evaluation."""
     assumptions: List[str] = [
@@ -347,6 +416,19 @@ def generate_assumptions(
         "Rain-fed farming conditions are assumed without major supplemental irrigation.",
         "Crop maturity durations, water needs, and stress thresholds reflect regional savanna cultivars.",
     ]
+
+    if scenario:
+        rain_chg = getattr(scenario, "rainfall_change_pct", 0.0)
+        temp_chg = getattr(scenario, "temperature_change_c", 0.0)
+        if rain_chg != 0.0 or temp_chg != 0.0:
+            assumptions.append(
+                f"Hypothetical sensitivity test, not a forecast: Daily rainfall scaled by {rain_chg:+g}%, daily temperatures shifted by {temp_chg:+g}°C per Section 8.5. Note limitation: does not alter storm frequency or rainfall timing patterns."
+            )
+
+    if lat is not None and lon is not None and not is_in_supported_region(lat, lon):
+        assumptions.append(
+            f"Geographic assumption: Regional knowledge base (calibrated for northern Nigeria savanna and Middle Belt) applied to coordinates ({lat:.2f}, {lon:.2f}) outside validated domain."
+        )
 
     if soil:
         unstated = []
@@ -372,16 +454,24 @@ def generate_information_gaps(
     crops_dict: Dict[str, Any],
     soil: Optional[SoilInput] = None,
     preferred_crops: Optional[List[str]] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
 ) -> List[str]:
-    """Generates comprehensive information gaps including EVERY unverified trait used in scoring."""
+    """Generates comprehensive information gaps including EVERY unverified trait used in scoring and regional warnings."""
     gaps: List[str] = []
+
+    # Geographic boundary check
+    if lat is not None and lon is not None and not is_in_supported_region(lat, lon):
+        gaps.append(
+            f"Geographic coverage warning: Field coordinates ({lat:.2f}, {lon:.2f}) fall outside AgroOrbit's validated knowledge base region (Nigeria northern savanna and Middle Belt: {REGION_LAT_MIN}°N–{REGION_LAT_MAX}°N, {REGION_LON_MIN}°E–{REGION_LON_MAX}°E). Recommendations outside that region are not validated."
+        )
 
     # 1. Unverified crop traits check
     for cid in sequence:
         crop = crops_dict.get(cid)
         if not crop or not hasattr(crop, "traits"):
             gaps.append(
-                f"Unrecognized crop '{cid}': Not cataloged in regional savanna knowledge base; neutral default agronomic parameters were applied."
+                f"Unrecognized crop '{cid}': Marked 'not assessed'. This crop is not cataloged in AgroOrbit's regional savanna knowledge base; no verified growth duration, water needs, or stress tolerances exist in the model."
             )
             continue
 
@@ -423,9 +513,17 @@ def generate_risks_for_local_review(
     crop_indicators_map: Dict[str, Any],
     crops_dict: Dict[str, Any],
     soil: Optional[SoilInput] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
 ) -> List[str]:
     """Identifies actionable agronomic and climate risks needing local extension review."""
     risks: List[str] = []
+
+    # Geographic boundary risk
+    if lat is not None and lon is not None and not is_in_supported_region(lat, lon):
+        risks.append(
+            f"Unvalidated agroecological zone: Field location ({lat:.2f}, {lon:.2f}) is outside the calibrated northern savanna and Middle Belt. Local rainfall patterns, soil dynamics, and crop suitability may deviate from modeled savanna conditions; in-person extension consultation is required."
+        )
 
     # Feasibility gate failures
     if not feasibility_passed and feasibility_risks:
@@ -435,7 +533,7 @@ def generate_risks_for_local_review(
     for cid in sequence:
         if cid not in crops_dict:
             risks.append(
-                f"Unrecognized crop '{cid}': Growth duration, water requirements, and regional savanna suitability cannot be validated without local extension consultation."
+                f"Unassessed crop '{cid}': AgroOrbit has no verified agronomic parameters for this crop. Field-level performance and climate compatibility must be verified with local extension officers."
             )
 
     # Monoculture / pest risk
@@ -449,7 +547,7 @@ def generate_risks_for_local_review(
         ind = crop_indicators_map.get(cid)
         if ind and hasattr(ind, "critical_dry_spell_risk_freq"):
             freq = ind.critical_dry_spell_risk_freq
-            if freq.frequency_pct >= 15.0:
+            if getattr(freq, "frequency_pct", 0.0) >= 15.0:
                 risks.append(
                     f"Flowering dry-spell hazard: Historical records show severe dry spells (>7 rainless days) during {ind.crop_name}'s flowering stage in {freq.formatted} ({freq.frequency_pct:.0f}%). Water conservation practices (e.g. tied ridges) are advised."
                 )
@@ -459,7 +557,7 @@ def generate_risks_for_local_review(
         ind = crop_indicators_map.get(cid)
         if ind and hasattr(ind, "heat_stress_risk_freq"):
             freq = ind.heat_stress_risk_freq
-            if freq.frequency_pct >= 15.0:
+            if getattr(freq, "frequency_pct", 0.0) >= 15.0:
                 risks.append(
                     f"Thermal stress risk: {ind.crop_name} experiences extreme temperatures (>35°C) during reproductive stages in {freq.formatted}. Verify local certified heat-tolerant cultivars."
                 )
@@ -516,6 +614,9 @@ def build_rotation_recommendation(
     priorities: PrioritiesInput,
     soil: Optional[SoilInput] = None,
     preferred_crops: Optional[List[str]] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    scenario: Optional[Any] = None,
 ) -> RotationRecommendation:
     """Builds a complete, validated RotationRecommendation instance."""
     sequence = candidate["sequence"]
@@ -527,6 +628,7 @@ def build_rotation_recommendation(
         priorities=priorities,
         crops_dict=crops_dict,
         criteria=criteria,
+        scenario=scenario,
     )
 
     evidence = generate_evidence_items(
@@ -535,6 +637,7 @@ def build_rotation_recommendation(
         crops_dict=crops_dict,
         soil=soil,
         preferred_crops=preferred_crops,
+        scenario=scenario,
     )
 
     benefits = generate_benefits(
@@ -544,13 +647,20 @@ def build_rotation_recommendation(
         preferred_crops=preferred_crops,
     )
 
-    assumptions = generate_assumptions(soil=soil)
+    assumptions = generate_assumptions(
+        soil=soil,
+        scenario=scenario,
+        lat=lat,
+        lon=lon,
+    )
 
     information_gaps = generate_information_gaps(
         sequence=sequence,
         crops_dict=crops_dict,
         soil=soil,
         preferred_crops=preferred_crops,
+        lat=lat,
+        lon=lon,
     )
 
     risks = generate_risks_for_local_review(
@@ -561,6 +671,8 @@ def build_rotation_recommendation(
         crop_indicators_map=crop_indicators_map,
         crops_dict=crops_dict,
         soil=soil,
+        lat=lat,
+        lon=lon,
     )
 
     reviewers = generate_review_recommended_by(criteria=criteria, soil=soil)

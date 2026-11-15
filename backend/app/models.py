@@ -4,7 +4,14 @@ Strictly adheres to Section 9 of AGROORBIT_PLAN_v2.md.
 """
 
 from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
+from app.config import (
+    ALLOWED_SOIL_DRAINAGES,
+    ALLOWED_SOIL_ORGANIC_MATTERS,
+    ALLOWED_SOIL_SLOPES,
+    ALLOWED_SOIL_TEXTURES,
+    ALLOWED_SOIL_WATER_SOURCES,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -126,11 +133,51 @@ class ClimateResponse(BaseModel):
 # ---------------------------------------------------------------------------
 class SoilInput(BaseModel):
     """Farmer-entered soil characteristics (all optional)."""
-    texture: Optional[Literal["sandy", "loam", "clay", "unknown"]] = "unknown"
+    texture: Optional[str] = "unknown"
     drainage: Optional[str] = "unknown"
-    organic_matter: Optional[Literal["low", "medium", "high", "unknown"]] = "unknown"
-    water_source: Optional[Literal["rain_fed", "limited_irrigation", "irrigated"]] = "rain_fed"
-    slope: Optional[Literal["flat", "gentle", "steep", "unknown"]] = "unknown"
+    organic_matter: Optional[str] = "unknown"
+    water_source: Optional[str] = "rain_fed"
+    slope: Optional[str] = "unknown"
+
+    @field_validator("texture")
+    @classmethod
+    def validate_texture(cls, v: Optional[str]) -> str:
+        val = str(v).lower().strip() if v is not None else "unknown"
+        if val not in ALLOWED_SOIL_TEXTURES:
+            raise ValueError(f"Invalid soil texture '{v}'. Allowed values are: {sorted(ALLOWED_SOIL_TEXTURES)}.")
+        return val
+
+    @field_validator("drainage")
+    @classmethod
+    def validate_drainage(cls, v: Optional[str]) -> str:
+        val = str(v).lower().strip() if v is not None else "unknown"
+        if val not in ALLOWED_SOIL_DRAINAGES:
+            raise ValueError(f"Invalid soil drainage '{v}'. Allowed values are: {sorted(ALLOWED_SOIL_DRAINAGES)}.")
+        return val
+
+    @field_validator("organic_matter")
+    @classmethod
+    def validate_organic_matter(cls, v: Optional[str]) -> str:
+        val = str(v).lower().strip() if v is not None else "unknown"
+        if val not in ALLOWED_SOIL_ORGANIC_MATTERS:
+            raise ValueError(f"Invalid soil organic_matter '{v}'. Allowed values are: {sorted(ALLOWED_SOIL_ORGANIC_MATTERS)}.")
+        return val
+
+    @field_validator("water_source")
+    @classmethod
+    def validate_water_source(cls, v: Optional[str]) -> str:
+        val = str(v).lower().strip() if v is not None else "rain_fed"
+        if val not in ALLOWED_SOIL_WATER_SOURCES:
+            raise ValueError(f"Invalid water_source '{v}'. Allowed values are: {sorted(ALLOWED_SOIL_WATER_SOURCES)}.")
+        return val
+
+    @field_validator("slope")
+    @classmethod
+    def validate_slope(cls, v: Optional[str]) -> str:
+        val = str(v).lower().strip() if v is not None else "unknown"
+        if val not in ALLOWED_SOIL_SLOPES:
+            raise ValueError(f"Invalid field slope '{v}'. Allowed values are: {sorted(ALLOWED_SOIL_SLOPES)}.")
+        return val
 
 
 class PrioritiesInput(BaseModel):
@@ -142,6 +189,13 @@ class PrioritiesInput(BaseModel):
     forage: int = Field(default=0, ge=0, le=5)
     resilience: int = Field(default=0, ge=0, le=5)
 
+    @field_validator("water_saving", "soil_health", "erosion", "market_preference", "forage", "resilience")
+    @classmethod
+    def validate_priority_range(cls, v: int, info: ValidationInfo) -> int:
+        if v < 0 or v > 5:
+            raise ValueError(f"Priority '{info.field_name}' must be an integer between 0 and 5, got {v}.")
+        return v
+
 
 class ScenarioInput(BaseModel):
     """Hypothetical climate sensitivity scenario parameters (P1)."""
@@ -151,13 +205,37 @@ class ScenarioInput(BaseModel):
 
 class RecommendRequest(BaseModel):
     """Request payload for POST /recommend."""
-    lat: float
-    lon: float
-    current_rotation: List[str]
+    lat: float = Field(..., ge=-90.0, le=90.0, description="Latitude between -90 and 90")
+    lon: float = Field(..., ge=-180.0, le=180.0, description="Longitude between -180 and 180")
+    current_rotation: List[str] = Field(..., min_length=1, max_length=3, description="List of 1 to 3 crop names")
     soil: SoilInput = Field(default_factory=SoilInput)
     priorities: PrioritiesInput = Field(default_factory=PrioritiesInput)
     preferred_crops: List[str] = Field(default_factory=list)
     scenario: ScenarioInput = Field(default_factory=ScenarioInput)
+
+    @field_validator("lat")
+    @classmethod
+    def validate_lat(cls, v: float) -> float:
+        if not (-90.0 <= v <= 90.0):
+            raise ValueError(f"Latitude must be between -90 and 90 degrees, got {v}.")
+        return v
+
+    @field_validator("lon")
+    @classmethod
+    def validate_lon(cls, v: float) -> float:
+        if not (-180.0 <= v <= 180.0):
+            raise ValueError(f"Longitude must be between -180 and 180 degrees, got {v}.")
+        return v
+
+    @field_validator("current_rotation")
+    @classmethod
+    def validate_current_rotation(cls, v: List[str]) -> List[str]:
+        if not (1 <= len(v) <= 3):
+            raise ValueError(f"current_rotation must contain between 1 and 3 crop names, got {len(v)}.")
+        for item in v:
+            if not isinstance(item, str) or not item.strip():
+                raise ValueError("Crop IDs in current_rotation must be non-empty strings.")
+        return [item.strip() for item in v]
 
 
 class CriteriaScores(BaseModel):
