@@ -431,6 +431,9 @@ def select_and_rank_recommendations(
     )
 
 
+_BASELINE_INDICATORS_CACHE: Dict[Tuple[float, float], Tuple[Any, Dict[str, Any]]] = {}
+
+
 def generate_recommendations(
     payload: Any,
     nasa_power_client: Optional[Any] = None,
@@ -473,12 +476,13 @@ def generate_recommendations(
     missing_pct = float(meta.get("overall_missing_pct", 0.0))
     quality_flags = list(meta.get("quality_flags", []))
 
-    # Scenario sensitivity perturbation if requested (Section 8.5)
+    is_scenario = False
     if hasattr(payload, "scenario") and payload.scenario:
         scen = payload.scenario
         rain_chg = getattr(scen, "rainfall_change_pct", 0.0)
         temp_chg = getattr(scen, "temperature_change_c", 0.0)
         if rain_chg != 0.0 or temp_chg != 0.0:
+            is_scenario = True
             df = df.copy()
             if rain_chg != 0.0 and "PRECTOTCORR" in df.columns:
                 df["PRECTOTCORR"] = df["PRECTOTCORR"] * (1.0 + rain_chg / 100.0)
@@ -490,27 +494,41 @@ def generate_recommendations(
                 if "T2M_MIN" in df.columns:
                     df["T2M_MIN"] = df["T2M_MIN"] + temp_chg
 
-    seasons_df = calculate_annual_seasons(df)
-
     crops_dict = load_crops()
     rotations_lib = load_rotations()
     soil_modifiers = load_soil_modifiers()
 
-    # Determine all unique crops needing indicators
-    all_needed_crops = set(crops_dict.keys())
-    for c in payload.current_rotation:
-        c_clean = c.strip().lower()
-        if c_clean:
-            all_needed_crops.add(c_clean)
+    # Fast in-memory memoization for baseline climate calculations
+    coord_key = (round(float(payload.lat), 4), round(float(payload.lon), 4))
+    if not is_scenario and coord_key in _BASELINE_INDICATORS_CACHE:
+        cached_seasons, cached_indicators = _BASELINE_INDICATORS_CACHE[coord_key]
+        seasons_df = cached_seasons
+        crop_indicators_map = dict(cached_indicators)
+        for c in payload.current_rotation:
+            c_clean = c.strip().lower()
+            if c_clean and c_clean not in crop_indicators_map:
+                crop_obj = crops_dict.get(c_clean, c_clean)
+                crop_indicators_map[c_clean] = compute_crop_climate_indicators(
+                    crop=crop_obj, df=df, seasons_df=seasons_df
+                )
+    else:
+        seasons_df = calculate_annual_seasons(df)
+        all_needed_crops = set(crops_dict.keys())
+        for c in payload.current_rotation:
+            c_clean = c.strip().lower()
+            if c_clean:
+                all_needed_crops.add(c_clean)
 
-    crop_indicators_map: Dict[str, Any] = {}
-    for cid in all_needed_crops:
-        crop_obj = crops_dict.get(cid, cid)
-        crop_indicators_map[cid] = compute_crop_climate_indicators(
-            crop=crop_obj,
-            df=df,
-            seasons_df=seasons_df,
-        )
+        crop_indicators_map = {}
+        for cid in all_needed_crops:
+            crop_obj = crops_dict.get(cid, cid)
+            crop_indicators_map[cid] = compute_crop_climate_indicators(
+                crop=crop_obj,
+                df=df,
+                seasons_df=seasons_df,
+            )
+        if not is_scenario:
+            _BASELINE_INDICATORS_CACHE[coord_key] = (seasons_df, crop_indicators_map)
 
     # 1. Generate all candidate sequences
     candidates = generate_candidate_rotations(

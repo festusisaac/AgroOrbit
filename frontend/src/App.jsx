@@ -129,13 +129,12 @@ export default function App() {
       const id = ++requestRef.current
       const client = !hasBackend || usingDemo || demo ? mockApi : api
 
-      if (quiet) {
+      const isSubsequentRun = quiet || Boolean(results)
+      if (isSubsequentRun) {
         setRefreshing(true)
       } else {
         setStatus('loading')
-        setResults(null)
         setError(null)
-        setClimate(null)
         setClimateStatus('loading')
         if (window.innerWidth < 1020) {
           window.setTimeout(
@@ -146,18 +145,26 @@ export default function App() {
       }
 
       try {
-        const [rec, clim] = await Promise.allSettled([
-          client.postRecommend({
-            lat: location.lat,
-            lon: location.lon,
-            current_rotation: form.current_rotation,
-            soil: form.soil,
-            priorities: form.priorities,
-            preferred_crops: form.preferred_crops,
-            scenario: form.scenario,
-          }),
-          client.getClimate(location.lat, location.lon),
-        ])
+        const needsClimate =
+          !climate ||
+          climate.location?.lat !== location.lat ||
+          climate.location?.lon !== location.lon
+
+        const recPromise = client.postRecommend({
+          lat: location.lat,
+          lon: location.lon,
+          current_rotation: form.current_rotation,
+          soil: form.soil,
+          priorities: form.priorities,
+          preferred_crops: form.preferred_crops,
+          scenario: form.scenario,
+        })
+
+        const climPromise = needsClimate
+          ? client.getClimate(location.lat, location.lon)
+          : Promise.resolve(climate)
+
+        const [rec, clim] = await Promise.allSettled([recPromise, climPromise])
 
         if (id !== requestRef.current) return
         if (rec.status === 'rejected') throw rec.reason
@@ -166,23 +173,23 @@ export default function App() {
         setResults(rec.value)
         setStatus('ready')
 
-        if (clim.status === 'fulfilled') {
+        if (clim.status === 'fulfilled' && clim.value) {
           setClimate(clim.value)
           setClimateStatus('ready')
           setWeather(clim.value)
           setWeatherStatus('ready')
-        } else if (!quiet) {
+        } else if (!isSubsequentRun) {
           setClimateStatus('error')
         }
       } catch (err) {
-        if (id !== requestRef.current || quiet) return
+        if (id !== requestRef.current || isSubsequentRun) return
         setStatus('error')
         setError(err)
       } finally {
         if (id === requestRef.current) setRefreshing(false)
       }
     },
-    [location, form, usingDemo],
+    [location, form, usingDemo, results, climate],
   )
 
   useEffect(() => {

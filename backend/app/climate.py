@@ -438,6 +438,9 @@ def calculate_bare_field_window(monthly: List[MonthlyClimate]) -> BareFieldWindo
     return BareFieldWindow(months=bare_months, basis="proxy")
 
 
+_CLIMATE_SUMMARY_CACHE: Dict[Tuple[float, float], ClimateResponse] = {}
+
+
 def compute_climate_summary(
     df: pd.DataFrame,
     lat: float,
@@ -448,6 +451,12 @@ def compute_climate_summary(
     flags: Optional[List[str]] = None,
 ) -> ClimateResponse:
     """Computes full climate response from cleaned daily DataFrame matching Section 9."""
+    coord_key = (round(float(lat), 4), round(float(lon), 4))
+    if coord_key in _CLIMATE_SUMMARY_CACHE:
+        cached = _CLIMATE_SUMMARY_CACHE[coord_key]
+        if location_label and cached.location.label != location_label:
+            cached.location.label = location_label
+        return cached
     if flags is None:
         flags = []
 
@@ -489,7 +498,7 @@ def compute_climate_summary(
         flags=flags,
     )
 
-    return ClimateResponse(
+    resp = ClimateResponse(
         location=location,
         datasets=datasets,
         monthly=monthly,
@@ -501,6 +510,8 @@ def compute_climate_summary(
         bare_field_window=bare_field,
         data_quality=data_quality,
     )
+    _CLIMATE_SUMMARY_CACHE[coord_key] = resp
+    return resp
 
 
 # ============================================================================

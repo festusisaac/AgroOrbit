@@ -2,7 +2,7 @@ import { LOCATIONS, CROPS, buildClimate, buildRecommend } from './mockData'
 
 const DEFAULT_API_BASE_URL = 'https://agroorbit-backend.onrender.com'
 const BASE = (import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL).trim().replace(/\/+$/, '')
-const TIMEOUT_MS = 30000
+const TIMEOUT_MS = 60000
 
 export const hasBackend = Boolean(BASE)
 
